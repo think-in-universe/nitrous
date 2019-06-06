@@ -7,7 +7,6 @@ node_modules:
 	yarn install
 
 build:
-	mkdir tmp
 	docker build -t steemit/steemit.com .
 
 clean:
