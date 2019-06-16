@@ -226,9 +226,21 @@ class Voting extends React.Component {
             is_comment,
             post_obj,
             username,
+            votingData,
             scotData,
         } = this.props;
 
+        // Incorporate 5 day regeneration time.
+        const currentVp = votingData
+            ? Math.min(
+                  votingData.get('voting_power') +
+                      (new Date() -
+                          Date.parse(votingData.get('last_vote_time'))) *
+                          10000 /
+                          (1000 * 60 * 60 * 24 * 5),
+                  10000
+              ) / 100
+            : 0;
         const {
             votingUp,
             votingDown,
@@ -248,6 +260,32 @@ class Voting extends React.Component {
             return (
                 <span>
                     <div className="weight-display">{s + b / 100}%</div>
+                    <div id="btn_group">
+                        <button
+                            id="weight25"
+                            onClick={this.handleButtonWeightChange(up, 2500)}
+                        >
+                            25%
+                        </button>
+                        <button
+                            id="weight50"
+                            onClick={this.handleButtonWeightChange(up, 5000)}
+                        >
+                            50%
+                        </button>
+                        <button
+                            id="weight75"
+                            onClick={this.handleButtonWeightChange(up, 7500)}
+                        >
+                            75%
+                        </button>
+                        <button
+                            id="weight100"
+                            onClick={this.handleButtonWeightChange(up, 10000)}
+                        >
+                            100%
+                        </button>
+                    </div>
                     <Slider
                         min={100}
                         max={MAX_WEIGHT}
@@ -257,7 +295,41 @@ class Voting extends React.Component {
                         onChangeComplete={this.storeSliderWeight(up)}
                         tooltip={false}
                     />
+                    {currentVp ? (
+                        <div className="weight-display">
+                            Voting Power: {currentVp.toFixed(1)}%
+                        </div>
+                    ) : (
+                        ''
+                    )}
                 </span>
+            );
+        };
+        this.handleButtonWeightChange = (up, weight) => e => {
+            let w;
+            if (up) {
+                w = {
+                    up: weight,
+                    down: this.state.sliderWeight.down,
+                };
+            } else {
+                w = {
+                    up: this.state.sliderWeight.up,
+                    down: weight,
+                };
+            }
+            this.setState({ sliderWeight: w });
+
+            const { username, is_comment } = this.props;
+            console.log(username);
+
+            localStorage.setItem(
+                'voteWeight' +
+                    (up ? '' : 'Down') +
+                    '-' +
+                    username +
+                    (is_comment ? '-comment' : ''),
+                weight
             );
         };
 
@@ -402,6 +474,7 @@ class Voting extends React.Component {
             scot_pending_token > 0 ||
             (new Date(cashout_time) > Date.now() &&
                 !(is_comment && total_votes == 0));
+
         const payoutItems = [];
         const numDecimals = Math.log10(SCOT_DENOM);
 
@@ -451,6 +524,78 @@ class Voting extends React.Component {
                 </span>
             </DropdownMenu>
         );
+        let cashout_time_steem = '1969-12-31T23:59:59';
+        let payout_steem = 0;
+        let author_payout_value = 0;
+        let curator_payout_value = 0;
+
+        if (post_obj) {
+            cashout_time_steem = post_obj.get('cashout_time');
+            payout_steem =
+                Math.round(
+                    parseFloat(
+                        String(post_obj.get('pending_payout_value')).split(
+                            'S'
+                        )[0]
+                    ) * 100
+                ) / 100;
+            curator_payout_value =
+                Math.round(
+                    parseFloat(post_obj.get('curator_payout_value')) /
+                        100000 *
+                        100
+                ) / 100;
+            author_payout_value =
+                Math.round(
+                    parseFloat(post_obj.get('total_payout_value')) /
+                        100000 *
+                        100
+                ) / 100;
+        }
+
+        if (
+            cashout_time_steem &&
+            /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d$/.test(cashout_time_steem)
+        ) {
+            cashout_time_steem = cashout_time_steem + 'Z'; // Firefox really wants this Z (Zulu)
+        }
+        const cashout_active_steem =
+            payout_steem > 0 || new Date(cashout_time_steem) > Date.now();
+
+        const payoutItemsSteem = [];
+
+        if (cashout_active_steem) {
+            payoutItemsSteem.push({ value: 'Pending Payout' });
+            payoutItemsSteem.push({
+                value: `$${payout_steem}`,
+            });
+        } else {
+            payout_steem =
+                Math.round((curator_payout_value + author_payout_value) * 100) /
+                100;
+            payoutItemsSteem.push({
+                value: `Past Token Payouts $${payout_steem}`,
+            });
+            payoutItemsSteem.push({
+                value: `- Author $${author_payout_value}`,
+            });
+            payoutItemsSteem.push({
+                value: `- Curator $${curator_payout_value}`,
+            });
+            //payout_steem = parseFloat(String(curator_payout_value).split(' ')[0]) + parseFloat(String(author_payout_value).split(' ')[0]);
+        }
+
+        const payoutElSteem = (
+            <DropdownMenu el="div" items={payoutItemsSteem}>
+                <span />
+                <span>
+                    <FormattedAsset amount={payout_steem} asset="$" />
+                    {payoutItemsSteem.length > 0 && (
+                        <Icon name="dropdown-arrow" />
+                    )}
+                </span>
+            </DropdownMenu>
+        );
 
         let voters_list = null;
         if (showList && total_votes > 0 && active_votes) {
@@ -462,17 +607,32 @@ class Voting extends React.Component {
                         ? -1
                         : 1
             );
+            let total_rshares = 0;
+
+            // sum of rshares
+            for (let v = 0; v < avotes.length; ++v) {
+                const { rshares } = avotes[v];
+                total_rshares += rshares;
+            }
             let voters = [];
             for (
                 let v = 0;
                 v < avotes.length && voters.length < MAX_VOTES_DISPLAY;
                 ++v
             ) {
-                const { percent, voter } = avotes[v];
+                const { percent, voter, rshares } = avotes[v];
                 const sign = Math.sign(percent);
                 if (sign === 0) continue;
                 voters.push({
-                    value: (sign > 0 ? '+ ' : '- ') + voter,
+                    value:
+                        (sign > 0 ? '+ ' : '- ') +
+                        voter +
+                        ' (' +
+                        percent / 100 +
+                        '%) ' +
+                        // price of voter
+                        (payout * rshares / total_rshares).toFixed(2) +
+                        LIQUID_TOKEN_UPPERCASE,
                     link: '/@' + voter,
                 });
             }
@@ -570,6 +730,7 @@ class Voting extends React.Component {
                     {downVote}
                     {payoutEl}
                 </span>
+                {payoutElSteem}
                 {voters_list}
             </span>
         );
@@ -591,28 +752,16 @@ export default connect(
         const username = current_account
             ? current_account.get('username')
             : null;
-        const vesting_shares = current_account
-            ? current_account.get('vesting_shares')
-            : 0.0;
-        const delegated_vesting_shares = current_account
-            ? current_account.get('delegated_vesting_shares')
-            : 0.0;
-        const received_vesting_shares = current_account
-            ? current_account.get('received_vesting_shares')
-            : 0.0;
-        const net_vesting_shares =
-            vesting_shares - delegated_vesting_shares + received_vesting_shares;
+        const votingData = current_account
+            ? current_account.get('voting')
+            : null;
         const voting = state.global.get(
             `transaction_vote_active_${author}_${permlink}`
         );
         const tokenBalances = current_account
             ? current_account.get('token_balances')
             : null;
-        const enable_slider =
-            net_vesting_shares > VOTE_WEIGHT_DROPDOWN_THRESHOLD_RSHARES ||
-            (tokenBalances &&
-                parseFloat(tokenBalances.get('stake')) >
-                    VOTE_WEIGHT_DROPDOWN_THRESHOLD);
+        const enable_slider = true;
 
         return {
             post: ownProps.post,
@@ -626,6 +775,7 @@ export default connect(
             post_obj: post,
             loggedin: username != null,
             voting,
+            votingData,
             scotData,
         };
     },
