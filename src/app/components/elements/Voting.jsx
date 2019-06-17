@@ -262,6 +262,12 @@ class Voting extends React.Component {
                     <div className="weight-display">{s + b / 100}%</div>
                     <div id="btn_group">
                         <button
+                            id="weight10"
+                            onClick={this.handleButtonWeightChange(up, 1000)}
+                        >
+                            10%
+                        </button>
+                        <button
                             id="weight25"
                             onClick={this.handleButtonWeightChange(up, 2500)}
                         >
