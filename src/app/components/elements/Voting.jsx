@@ -259,10 +259,7 @@ class Voting extends React.Component {
             const s = up ? '' : '-';
             return (
                 <span>
-                    <div>
-                        steem vp : {post_obj.get('voting_power')}
-                        sct vp : {post_obj.get('scotVotingPower')}
-                    </div>
+                    <div className="weight-display">{s + b / 100}%</div>
                     <div id="btn_group">
                         <button
                             id="weight-left"
@@ -300,44 +297,27 @@ class Voting extends React.Component {
                             100%{' '}
                         </button>
                     </div>
-                    <div>
+                    <Slider
+                        min={100}
+                        max={MAX_WEIGHT}
+                        step={100}
+                        value={b}
+                        onChange={this.handleWeightChange(up)}
+                        onChangeComplete={this.storeSliderWeight(up)}
+                        tooltip={false}
+                    />
+                    {currentVp ? (
                         <div className="weight-display">
-                            <form>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    maxlength="3"
-                                    value={s + b / 100}
-                                    onChange={this.handleButtonWeightChange(
-                                        up,
-                                        -1
-                                    )}
-                                />
-                            </form>
+                            Voting Power: {currentVp.toFixed(1)}%
                         </div>
-                        <div>
-                            <Slider
-                                min={100}
-                                max={MAX_WEIGHT}
-                                step={100}
-                                value={b}
-                                onChange={this.handleWeightChange(up)}
-                                onChangeComplete={this.storeSliderWeight(up)}
-                                tooltip={false}
-                            />
-                        </div>
-                    </div>
+                    ) : (
+                        ''
+                    )}
                 </span>
             );
         };
         this.handleButtonWeightChange = (up, weight) => e => {
             let w;
-            if (e.target.value > 100) e.target.value = 100;
-
-            if (weight === -1) {
-                weight = e.target.value * 100;
-            }
             if (up) {
                 w = {
                     up: weight,
