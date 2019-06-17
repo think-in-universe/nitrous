@@ -259,54 +259,85 @@ class Voting extends React.Component {
             const s = up ? '' : '-';
             return (
                 <span>
-                    <div className="weight-display">{s + b / 100}%</div>
+                    <div>
+                        steem vp : {post_obj.get('voting_power')}
+                        sct vp : {post_obj.get('scotVotingPower')}
+                    </div>
                     <div id="btn_group">
                         <button
-                            id="weight25"
+                            id="weight-left"
+                            onClick={this.handleButtonWeightChange(up, 1000)}
+                        >
+                            {' '}
+                            10%{' '}
+                        </button>
+                        <button
+                            id="weight-center"
                             onClick={this.handleButtonWeightChange(up, 2500)}
                         >
-                            25%
+                            {' '}
+                            25%{' '}
                         </button>
                         <button
-                            id="weight50"
+                            id="weight-center"
                             onClick={this.handleButtonWeightChange(up, 5000)}
                         >
-                            50%
+                            {' '}
+                            50%{' '}
                         </button>
                         <button
-                            id="weight75"
+                            id="weight-center"
                             onClick={this.handleButtonWeightChange(up, 7500)}
                         >
-                            75%
+                            {' '}
+                            75%{' '}
                         </button>
                         <button
-                            id="weight100"
+                            id="weight-right"
                             onClick={this.handleButtonWeightChange(up, 10000)}
                         >
-                            100%
+                            {' '}
+                            100%{' '}
                         </button>
                     </div>
-                    <Slider
-                        min={100}
-                        max={MAX_WEIGHT}
-                        step={100}
-                        value={b}
-                        onChange={this.handleWeightChange(up)}
-                        onChangeComplete={this.storeSliderWeight(up)}
-                        tooltip={false}
-                    />
-                    {currentVp ? (
+                    <div>
                         <div className="weight-display">
-                            Voting Power: {currentVp.toFixed(1)}%
+                            <form>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    maxlength="3"
+                                    value={s + b / 100}
+                                    onChange={this.handleButtonWeightChange(
+                                        up,
+                                        -1
+                                    )}
+                                />
+                            </form>
                         </div>
-                    ) : (
-                        ''
-                    )}
+                        <div>
+                            <Slider
+                                min={100}
+                                max={MAX_WEIGHT}
+                                step={100}
+                                value={b}
+                                onChange={this.handleWeightChange(up)}
+                                onChangeComplete={this.storeSliderWeight(up)}
+                                tooltip={false}
+                            />
+                        </div>
+                    </div>
                 </span>
             );
         };
         this.handleButtonWeightChange = (up, weight) => e => {
             let w;
+            if (e.target.value > 100) e.target.value = 100;
+
+            if (weight === -1) {
+                weight = e.target.value * 100;
+            }
             if (up) {
                 w = {
                     up: weight,
