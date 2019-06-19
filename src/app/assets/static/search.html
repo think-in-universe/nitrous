@@ -157,7 +157,7 @@
 
     steem.api.setOptions({ url: 'https://steemd.minnowsupportproject.org' });
 
-    var render_preview = function(element) {
+    function render_preview(element) {
         // render the preview with steem.js
         if (element && element.href) {
             var segs = element.href.split("/");
@@ -171,12 +171,12 @@
         }
     }
 
-    var get_preview_element = function(e) {
+    function get_preview_element(e) {
         var res = $(e).parent().parent().parent();
         return res.children("div.box");
     }
 
-    var add_mouseover_listener = function(e) {
+    function add_mouseover_listener(e) {
         var events = $._data(e, "events");
         if (!events || ! events.mouseover || events.mouseover.length == 0) {
             $(e).on("mouseover", function(){
@@ -188,14 +188,14 @@
         }
     }
 
-    var append_preview_element = function(e, md) {
+    function append_preview_element(e, md) {
         var res = $(e).parent().parent().parent();
         if (res.children("div.box").length == 0) {
             res.append('<div class="box">' + marked(md) + '</div>');
         }
     }
 
-    var attach_preview_listeners = function() {
+    function attach_preview_listeners() {
         // 1. find the search results elements
         var elements = $(search_res_titles);
 
@@ -217,7 +217,7 @@
         }, 100);
     }
 
-    var add_previews = function() {
+    function add_previews() {
         add_dom_render_observer(search_res_titles, attach_preview_listeners);
     }
 
