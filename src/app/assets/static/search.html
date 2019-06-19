@@ -92,7 +92,7 @@
             height: auto;
             display: block;
             height: auto;
-        }    
+        }
       .logo-new .icon-svg {
           fill: #06D6A9;
           transition: 0.2s all ease-in-out;
@@ -124,10 +124,87 @@
 <div class="row medium-8 large-7 search-content">
     <div class="columns">
         <br />
+        <div id="search_renderer"></div>
         <gcse:search linktarget="_self"></gcse:search>
     </div>
 </div>
+<!-- <script
+      src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+      integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8="
+      crossorigin="anonymous"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js"></script>
 <script>
+    var render_preview = function(element) {
+        // render the preview with steem.js
+        console.log(element.href);
+    }
+
+    var attach_preview_button = function() {
+        // 1. find the search results elements
+        var elements = $("div.gsc-wrapper div.gsc-thumbnail-inside a.gs-title");
+        // console.log(results);
+
+        // 2. add the preview function on mouseover event
+        if (elements && elements.length > 0) {
+            for (var i = 0; i < elements.length; i++) {
+                var e = elements[i];
+                var events = $._data(e, "events");
+                if (!events || ! events.mouseover || events.mouseover.length == 0) {
+                    $(e).on("mouseover", function(){
+                        render_preview(this);
+                    });
+                }
+            }
+        }
+    }
+
+    function add_dom_render_observer(selector, func) {
+        var i = setInterval(function(){
+            if ($(selector).length != 0) {
+                func();
+                // clearInterval(i);
+            }
+        }, 100);
+    }
+
+    var add_previews = function() {
+        add_dom_render_observer("div.gsc-wrapper div.gsc-thumbnail-inside a.gs-title", attach_preview_button);
+    }
+
+    var render = function() {
+        // Render an element with both search box and search results in div with id 'search_renderer'.
+        google.search.cse.element.render({
+          div: "search_renderer",
+          tag: 'search',
+          gname: 'custom_search'
+        });
+    }
+
+    var myCallback = function() {
+      console.log("callback called");
+      if (document.readyState == 'complete') {
+        // Document is ready when CSE element is initialized.
+        render();
+      } else {
+        // Document is not ready yet, when CSE element is initialized.
+        google.setOnLoadCallback(function() {
+            render();
+        }, true);
+      }
+    };
+
+    // Insert it before the CSE code snippet so that cse.js can take the script
+    // parameters, like parsetags, callbacks.
+    // window.__gcse = {
+    //   parsetags: 'onload', // 'explicit', //
+    //   callback: myCallback
+    // };
+
+    $(document).ready(function(){
+        console.log("add previews");
+        add_previews();
+    });
+
   (function() {
     var cx = '002054531452547600153:c65zk0qbyd4';
     var gcse = document.createElement('script');
