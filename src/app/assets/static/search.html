@@ -110,10 +110,20 @@
             display: none;
             width: 100%;
         }
-        a:hover + .box,.box:hover{
+        div.gsc-result:hover .box,.box:hover{
             display: block;
             position: relative;
             z-index: 100;
+            width: 100%;
+            max-height: 200px;
+            margin: 10px auto;
+            padding: 10px;
+            background: #fdfdff;
+            border-radius: 5px;
+            border: 3px solid #76A4FC;
+            transition: all 5s ease-in-out;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -135,13 +145,13 @@
 <div class="row medium-8 large-7 search-content">
     <div class="columns">
         <br />
-        <div id="search_renderer"></div>
         <gcse:search linktarget="_self"></gcse:search>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js"></script>
 <script src="//cdn.steemjs.com/lib/latest/steem.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
     var search_res_titles = "div.gsc-wrapper div.gsc-thumbnail-inside a.gs-title";
 
@@ -154,9 +164,16 @@
             var permlink = segs[segs.length - 1];
             var author = segs[segs.length - 2].replace("@", "");
             steem.api.getContent(author, permlink, function(err, result) {
-              console.log(err, result);
+                if (result && result.body) {
+                    append_preview_element(element, result.body);
+                }
             });
         }
+    }
+
+    var get_preview_element = function(e) {
+        var res = $(e).parent().parent().parent();
+        return res.children("div.box");
     }
 
     var add_mouseover_listener = function(e) {
@@ -164,18 +181,21 @@
         if (!events || ! events.mouseover || events.mouseover.length == 0) {
             $(e).on("mouseover", function(){
                 render_preview(this);
+                get_preview_element(e).show();
+            }).on("mouseout", function(){
+                get_preview_element(e).hide();
             });
         }
     }
 
-    // var append_preview_element = function(e) {
-    //     if ($(e).siblings("div.box").length == 0) {
-    //         $(e).after('<div class="box"><iframe src="'+e.href+'" width = "500px" height = "300px"></iframe></div>')
-    //         console.log(e, $(e).siblings("div.box"));
-    //     }
-    // }
+    var append_preview_element = function(e, md) {
+        var res = $(e).parent().parent().parent();
+        if (res.children("div.box").length == 0) {
+            res.append('<div class="box">' + marked(md) + '</div>');
+        }
+    }
 
-    var attach_preview_button = function() {
+    var attach_preview_listeners = function() {
         // 1. find the search results elements
         var elements = $(search_res_titles);
         // console.log(results);
@@ -200,11 +220,10 @@
     }
 
     var add_previews = function() {
-        add_dom_render_observer(search_res_titles, attach_preview_button);
+        add_dom_render_observer(search_res_titles, attach_preview_listeners);
     }
 
     $(document).ready(function(){
-        console.log("add previews");
         add_previews();
     });
 
