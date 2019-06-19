@@ -198,14 +198,12 @@
     var attach_preview_listeners = function() {
         // 1. find the search results elements
         var elements = $(search_res_titles);
-        // console.log(results);
 
         // 2. add the preview function on mouseover event
         if (elements && elements.length > 0) {
             for (var i = 0; i < elements.length; i++) {
                 var e = elements[i];
                 add_mouseover_listener(e);
-                // append_preview_element(e);
             }
         }
     }
