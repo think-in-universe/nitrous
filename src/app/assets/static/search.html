@@ -3,7 +3,7 @@
     <meta charSet="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/ico" href="/favicon.ico" />
-    <title>Search - steemit.com</title>
+    <title>Search - steemcoinpan.com</title>
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.2.1/foundation-flex.css">
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
     <style>
@@ -105,6 +105,17 @@
       }
 
     </style>
+    <style type="text/css">
+        .box{
+            display: none;
+            width: 100%;
+        }
+        a:hover + .box,.box:hover{
+            display: block;
+            position: relative;
+            z-index: 100;
+        }
+    </style>
 </head>
 <body>
 <div class="top-bar search header">
@@ -128,32 +139,53 @@
         <gcse:search linktarget="_self"></gcse:search>
     </div>
 </div>
-<!-- <script
-      src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-      integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8="
-      crossorigin="anonymous"></script> -->
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js"></script>
+<script src="//cdn.steemjs.com/lib/latest/steem.min.js"></script>
 <script>
+    var search_res_titles = "div.gsc-wrapper div.gsc-thumbnail-inside a.gs-title";
+
+    steem.api.setOptions({ url: 'https://steemd.minnowsupportproject.org' });
+
     var render_preview = function(element) {
         // render the preview with steem.js
-        console.log(element.href);
+        if (element && element.href) {
+            var segs = element.href.split("/");
+            var permlink = segs[segs.length - 1];
+            var author = segs[segs.length - 2].replace("@", "");
+            steem.api.getContent(author, permlink, function(err, result) {
+              console.log(err, result);
+            });
+        }
     }
+
+    var add_mouseover_listener = function(e) {
+        var events = $._data(e, "events");
+        if (!events || ! events.mouseover || events.mouseover.length == 0) {
+            $(e).on("mouseover", function(){
+                render_preview(this);
+            });
+        }
+    }
+
+    // var append_preview_element = function(e) {
+    //     if ($(e).siblings("div.box").length == 0) {
+    //         $(e).after('<div class="box"><iframe src="'+e.href+'" width = "500px" height = "300px"></iframe></div>')
+    //         console.log(e, $(e).siblings("div.box"));
+    //     }
+    // }
 
     var attach_preview_button = function() {
         // 1. find the search results elements
-        var elements = $("div.gsc-wrapper div.gsc-thumbnail-inside a.gs-title");
+        var elements = $(search_res_titles);
         // console.log(results);
 
         // 2. add the preview function on mouseover event
         if (elements && elements.length > 0) {
             for (var i = 0; i < elements.length; i++) {
                 var e = elements[i];
-                var events = $._data(e, "events");
-                if (!events || ! events.mouseover || events.mouseover.length == 0) {
-                    $(e).on("mouseover", function(){
-                        render_preview(this);
-                    });
-                }
+                add_mouseover_listener(e);
+                // append_preview_element(e);
             }
         }
     }
@@ -168,37 +200,8 @@
     }
 
     var add_previews = function() {
-        add_dom_render_observer("div.gsc-wrapper div.gsc-thumbnail-inside a.gs-title", attach_preview_button);
+        add_dom_render_observer(search_res_titles, attach_preview_button);
     }
-
-    var render = function() {
-        // Render an element with both search box and search results in div with id 'search_renderer'.
-        google.search.cse.element.render({
-          div: "search_renderer",
-          tag: 'search',
-          gname: 'custom_search'
-        });
-    }
-
-    var myCallback = function() {
-      console.log("callback called");
-      if (document.readyState == 'complete') {
-        // Document is ready when CSE element is initialized.
-        render();
-      } else {
-        // Document is not ready yet, when CSE element is initialized.
-        google.setOnLoadCallback(function() {
-            render();
-        }, true);
-      }
-    };
-
-    // Insert it before the CSE code snippet so that cse.js can take the script
-    // parameters, like parsetags, callbacks.
-    // window.__gcse = {
-    //   parsetags: 'onload', // 'explicit', //
-    //   callback: myCallback
-    // };
 
     $(document).ready(function(){
         console.log("add previews");
