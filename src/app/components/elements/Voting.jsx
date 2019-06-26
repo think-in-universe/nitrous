@@ -11,6 +11,7 @@ import {
     DEBT_TOKEN_SHORT,
     LIQUID_TOKEN_UPPERCASE,
     INVEST_TOKEN_SHORT,
+    SCOT_DENOM,
     VOTE_WEIGHT_DROPDOWN_THRESHOLD,
 } from 'app/client_config';
 import FormattedAsset from 'app/components/elements/FormattedAsset';
@@ -228,10 +229,8 @@ class Voting extends React.Component {
             username,
             votingData,
             scotData,
-            scotPrecision,
         } = this.props;
 
-        const scotDenom = Math.pow(10, scotPrecision);
         // Incorporate 5 day regeneration time.
         const currentVp = votingData
             ? Math.min(
@@ -453,12 +452,12 @@ class Voting extends React.Component {
                 ? scot_pending_token
                 : scot_total_author_payout + scot_total_curator_payout;
 
-            // divide by scotDenom
-            scot_pending_token /= scotDenom;
-            scot_total_curator_payout /= scotDenom;
-            scot_total_author_payout /= scotDenom;
-            payout /= scotDenom;
-            promoted /= scotDenom;
+            // divide by SCOT_DENOM
+            scot_pending_token /= SCOT_DENOM;
+            scot_total_curator_payout /= SCOT_DENOM;
+            scot_total_author_payout /= SCOT_DENOM;
+            payout /= SCOT_DENOM;
+            promoted /= SCOT_DENOM;
         }
         const total_votes = post_obj.getIn(['stats', 'total_votes']);
 
@@ -482,10 +481,11 @@ class Voting extends React.Component {
                 !(is_comment && total_votes == 0));
 
         const payoutItems = [];
+        const numDecimals = Math.log10(SCOT_DENOM);
 
         if (promoted > 0) {
             payoutItems.push({
-                value: `Promotion Cost ${promoted.toFixed(scotPrecision)} ${
+                value: `Promotion Cost ${promoted.toFixed(numDecimals)} ${
                     LIQUID_TOKEN_UPPERCASE
                 }`,
             });
@@ -493,7 +493,7 @@ class Voting extends React.Component {
         if (cashout_active) {
             payoutItems.push({ value: 'Pending Payout' });
             payoutItems.push({
-                value: `${scot_pending_token.toFixed(scotPrecision)} ${
+                value: `${scot_pending_token.toFixed(numDecimals)} ${
                     LIQUID_TOKEN_UPPERCASE
                 }`,
             });
@@ -502,18 +502,18 @@ class Voting extends React.Component {
             });
         } else if (scot_total_author_payout) {
             payoutItems.push({
-                value: `Past Token Payouts ${payout.toFixed(scotPrecision)} ${
+                value: `Past Token Payouts ${payout.toFixed(numDecimals)} ${
                     LIQUID_TOKEN_UPPERCASE
                 }`,
             });
             payoutItems.push({
                 value: `- Author ${scot_total_author_payout.toFixed(
-                    scotPrecision
+                    numDecimals
                 )} ${LIQUID_TOKEN_UPPERCASE}`,
             });
             payoutItems.push({
                 value: `- Curator ${scot_total_curator_payout.toFixed(
-                    scotPrecision
+                    numDecimals
                 )} ${LIQUID_TOKEN_UPPERCASE}`,
             });
         }
@@ -747,7 +747,6 @@ export default connect(
     (state, ownProps) => {
         const post = state.global.getIn(['content', ownProps.post]);
         if (!post) return ownProps;
-        const scotConfig = state.app.get('scotConfig');
         const scotData = post.getIn(['scotData', LIQUID_TOKEN_UPPERCASE]);
         const author = post.get('author');
         const permlink = post.get('permlink');
@@ -783,7 +782,6 @@ export default connect(
             voting,
             votingData,
             scotData,
-            scotPrecision: scotConfig.getIn(['info', 'precision'], 0),
         };
     },
 

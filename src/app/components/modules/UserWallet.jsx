@@ -18,6 +18,7 @@ import {
 import * as transactionActions from 'app/redux/TransactionReducer';
 import * as globalActions from 'app/redux/GlobalReducer';
 import DropdownMenu from 'app/components/elements/DropdownMenu';
+import FormattedAssetToken from 'app/components/elements/FormattedAssetToken';
 
 class UserWallet extends React.Component {
     constructor() {
@@ -73,8 +74,6 @@ class UserWallet extends React.Component {
                   balance: '0',
                   stake: '0',
                   pendingUnstake: '0',
-                  delegationsIn: '0',
-                  delegationsOut: '0',
               };
         const tokenUnstakes = account.has('token_unstakes')
             ? account.get('token_unstakes').toJS()
@@ -88,11 +87,12 @@ class UserWallet extends React.Component {
                   pending_token: 0,
               };
         const balance = tokenBalances.balance;
-        const stakeBalance = tokenBalances.stake;
-        const delegatedStake = tokenBalances.delegationsOut;
+        const delegatedStake = tokenBalances.delegationsOut || '0';
+        const stakeBalance =
+            parseFloat(tokenBalances.stake) + parseFloat(delegatedStake);
         const netDelegatedStake =
             parseFloat(delegatedStake) -
-            parseFloat(tokenBalances.delegationsIn);
+            parseFloat(tokenBalances.delegationsIn || '0');
         const pendingUnstakeBalance = tokenBalances.pendingUnstake;
 
         let isMyAccount =
@@ -115,7 +115,7 @@ class UserWallet extends React.Component {
             const name = account.get('name');
             this.props.showPowerdown({
                 account: name,
-                stakeBalance,
+                stakeBalance: stakeBalance.toFixed(scotPrecision),
                 delegatedStake,
             });
         };
@@ -181,7 +181,9 @@ class UserWallet extends React.Component {
         }
 
         const balance_str = numberWithCommas(balance);
-        const stake_balance_str = numberWithCommas(stakeBalance);
+        const stake_balance_str = numberWithCommas(
+            stakeBalance.toFixed(scotPrecision)
+        );
         const received_stake_balance_str =
             (netDelegatedStake < 0 ? '+' : '') +
             numberWithCommas((-netDelegatedStake).toFixed(scotPrecision));
@@ -215,6 +217,32 @@ class UserWallet extends React.Component {
                     </div>
                 </div>
             );
+        }
+
+        // added by realmankwon (2019-06-12) add all token balances
+        let all_token_balances_list = [];
+
+        if (account.has('all_token_balances')) {
+            const allTokenBalances = account.get('all_token_balances').toJS();
+
+            // added by realmankwon (2019-06-18) sort by alphabet asc
+            allTokenBalances.sort((a, b) => (a.symbol > b.symbol ? 1 : -1));
+
+            for (let v = 0; v < allTokenBalances.length; ++v) {
+                const tokenBalance = allTokenBalances[v];
+                // added by realmankwon (2019-06-18) except LIQUID_TOKEN_UPPERCASE
+                if (tokenBalance.symbol === LIQUID_TOKEN_UPPERCASE) continue;
+
+                all_token_balances_list.push(
+                    <span>
+                        <FormattedAssetToken
+                            balance={tokenBalance.balance}
+                            stake={tokenBalance.stake}
+                            symbol={tokenBalance.symbol}
+                        />
+                    </span>
+                );
+            }
         }
 
         return (
@@ -312,6 +340,15 @@ class UserWallet extends React.Component {
                         </div>
                     </div>
                 )}
+
+                <div className="row">
+                    <div className="column small-12">Steem Engine Token</div>
+                    <div className="column small-12">
+                        <br />
+                        {all_token_balances_list}
+                    </div>
+                </div>
+
                 <div className="row">
                     <div className="column small-12">
                         <hr />
