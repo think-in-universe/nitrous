@@ -331,9 +331,9 @@ class Header extends React.Component {
                                 <SearchInput />
                             </span>
                             <span className="Header__search">
-                                <a href="/static/search.html">
+                                <Link to="/search.html">
                                     <IconButton icon="magnifyingGlass" />
-                                </a>
+                                </Link>
                             </span>
                             {/*SUBMIT STORY*/}
                             {submit_story}
