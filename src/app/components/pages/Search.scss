@@ -94,11 +94,11 @@
       padding: 8px 0;
     }
 
-    .box{
+    .preview{
         display: none;
         width: 100%;
     }
-    div.gsc-result:hover .box,.box:hover{
+    div.gsc-result:hover .preview,.preview:hover{
         display: block;
         position: relative;
         z-index: 100;

@@ -1,8 +1,34 @@
 import React from 'react';
 import tt from 'counterpart';
-import { APP_NAME } from 'app/client_config';
+import { connect } from 'react-redux';
+// import ReactDOM from 'react-dom';
+import * as transactionActions from 'app/redux/TransactionReducer';
+import * as globalActions from 'app/redux/GlobalReducer';
+// import LoadingIndicator from 'app/components/elements/LoadingIndicator';
+import {
+    APP_NAME,
+    LIQUID_TOKEN_UPPERCASE,
+    PROMOTED_POST_ACCOUNT,
+} from 'app/client_config';
+// import MarkdownViewer from 'app/components/cards/MarkdownViewer';
 
-class Search extends React.Component {
+class PaidSearch extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            amount: '1.0',
+            asset: '',
+            loading: false,
+            amountError: '',
+            trxError: '',
+        };
+        this.onSubmit = this.onSubmit.bind(this);
+        this.errorCallback = this.errorCallback.bind(this);
+        this.addPreviews = this.addPreviews.bind(this);
+        // this.amountChange = this.amountChange.bind(this);
+        // this.assetChange = this.assetChange.bind(this);
+    }
+
     render() {
         return (
             <div className="Search">
@@ -96,7 +122,40 @@ class Search extends React.Component {
         loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
     }
 
+    onSubmit(element) {
+        if (element && element.getAttribute('gs-url')) {
+            const url = element.getAttribute('gs-url');
+            let segs = url.split('/');
+            const permlink = segs[segs.length - 1];
+            const author = segs[segs.length - 2].replace('@', '');
+            const amount = 0.00001; // this.state;
+            this.setState({ loading: true });
+
+            const onSuccess = () => {
+                window.open(url, '_blank');
+            };
+
+            console.log('-- PaidSearch.onSubmit -->');
+            this.props.dispatchSubmit({
+                amount,
+                asset: LIQUID_TOKEN_UPPERCASE,
+                author,
+                permlink,
+                onSuccess,
+                currentUser: this.props.currentUser,
+                errorCallback: this.errorCallback,
+            });
+        }
+    }
+
+    errorCallback(estr) {
+        this.setState({ trxError: estr, loading: false });
+    }
+
     addPreviews() {
+        const page = this;
+        let remove_gse_url_redirect = false;
+
         // const $ = document.querySelectorAll;
         const search_res_titles =
             'div.gsc-wrapper div.gsc-thumbnail-inside a.gs-title';
@@ -105,8 +164,8 @@ class Search extends React.Component {
 
         function render_preview(element) {
             // render the preview with steem.js
-            if (element && element.href) {
-                var segs = element.href.split('/');
+            if (element && element.getAttribute('gs-url')) {
+                var segs = element.getAttribute('gs-url').split('/');
                 var permlink = segs[segs.length - 1];
                 var author = segs[segs.length - 2].replace('@', '');
                 steem.api.getContent(author, permlink, function(err, result) {
@@ -117,17 +176,28 @@ class Search extends React.Component {
             }
         }
 
+        function clean_markdown(md) {
+            // remove image tag
+            md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
+            return marked(md);
+        }
+
         function get_preview_element(e) {
             var res = $(e)
                 .parent()
                 .parent()
                 .parent();
-            return res.children('div.box');
+            return res.children('div.preview');
         }
 
-        function add_mouseover_listener(e) {
+        function add_event_listeners(e) {
             var events = $._data(e, 'events');
             if (!events || !events.mouseover || events.mouseover.length == 0) {
+                // update attribute
+                $(e)
+                    .attr('gs-url', $(e).attr('href'))
+                    .removeAttr('href');
+
                 $(e)
                     .on('mouseover', function() {
                         render_preview(this);
@@ -135,13 +205,16 @@ class Search extends React.Component {
                     })
                     .on('mouseout', function() {
                         get_preview_element(e).hide();
+                    })
+                    .on('click', function(event) {
+                        event.preventDefault();
+                        page.onSubmit(e);
+                    })
+                    .on('mousedown', function(event) {
+                        event.preventDefault();
+                        event.stopPropagation();
                     });
             }
-        }
-
-        function clean_markdown(md) {
-            // remove image tag
-            return md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
         }
 
         function append_preview_element(e, md) {
@@ -149,9 +222,24 @@ class Search extends React.Component {
                 .parent()
                 .parent()
                 .parent();
-            if (res.children('div.box').length == 0) {
-                md = clean_markdown(md);
-                res.append('<div class="box">' + marked(md) + '</div>');
+            if (res.children('div.preview').length == 0) {
+                res.append(
+                    '<div class="preview">' + clean_markdown(md) + '</div>'
+                );
+
+                // res.append('<div class="box" />');
+                // ReactDOM.render(
+                //     <MarkdownViewer
+                //         formId={"search-preview" + '-viewer'}
+                //         text={md}
+                //         jsonMetadata={{}}
+                //         large
+                //         highQualityPost={false}
+                //         noImage={true}
+                //         hideImages={true}
+                //     />,
+                //     res.children('div.box')[0]
+                // );
             }
         }
 
@@ -159,11 +247,11 @@ class Search extends React.Component {
             // 1. find the search results elements
             var elements = $(search_res_titles);
 
-            // 2. add the preview function on mouseover event
+            // 2. add the preview and pay function
             if (elements && elements.length > 0) {
                 for (var i = 0; i < elements.length; i++) {
                     var e = elements[i];
-                    add_mouseover_listener(e);
+                    add_event_listeners(e);
                 }
             }
         }
@@ -196,6 +284,68 @@ class Search extends React.Component {
         // this.addPreviews();
     }
 }
+
+const Search = connect(
+    (state, ownProps) => {
+        const currentUser = state.user.get('current'); // state.user.getIn(['current']);
+        return { ...ownProps, currentUser };
+    },
+
+    // mapDispatchToProps
+    dispatch => ({
+        dispatchSubmit: ({
+            amount,
+            asset,
+            author,
+            permlink,
+            currentUser,
+            onSuccess,
+            errorCallback,
+        }) => {
+            if (!currentUser) {
+                return;
+            }
+
+            const username = currentUser.get('username');
+
+            const successCallback = () => {
+                dispatch(
+                    globalActions.getState({ url: `@${username}/transfers` })
+                ); // refresh transfer history
+                onSuccess();
+            };
+            const transferOperation = {
+                contractName: 'tokens',
+                contractAction: 'transfer',
+                contractPayload: {
+                    symbol: LIQUID_TOKEN_UPPERCASE,
+                    to: author,
+                    quantity: amount,
+                    memo: `@${author}/${permlink}`,
+                },
+            };
+            const operation = {
+                id: 'ssc-mainnet1',
+                required_auths: [username],
+                json: JSON.stringify(transferOperation),
+                __config: {
+                    successMessage:
+                        tt(
+                            'promote_post_jsx.you_successfully_promoted_this_post'
+                        ) + '.',
+                },
+            };
+            dispatch(
+                transactionActions.broadcastOperation({
+                    type: 'custom_json',
+                    operation,
+                    successCallback,
+                    errorCallback,
+                })
+            );
+        },
+    })
+)(PaidSearch);
 
 module.exports = {
     path: 'search.html',
