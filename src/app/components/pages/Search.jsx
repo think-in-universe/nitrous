@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 // import ReactDOM from 'react-dom';
 import * as transactionActions from 'app/redux/TransactionReducer';
 import * as globalActions from 'app/redux/GlobalReducer';
-// import LoadingIndicator from 'app/components/elements/LoadingIndicator';
+import LoadingIndicator from 'app/components/elements/LoadingIndicator';
 import {
     APP_NAME,
     LIQUID_TOKEN_UPPERCASE,
@@ -30,10 +30,17 @@ class PaidSearch extends React.Component {
     }
 
     render() {
+        const { loading } = this.state;
         return (
             <div className="Search">
                 <div className="row medium-8 large-7 search-content">
                     <div className="columns">
+                        {loading && (
+                            <span>
+                                <LoadingIndicator type="circle" />
+                                <br />
+                            </span>
+                        )}
                         <br />
                         {/* <gcse:search linktarget="_self"></gcse:search> */}
                         <div
@@ -128,12 +135,27 @@ class PaidSearch extends React.Component {
             let segs = url.split('/');
             const permlink = segs[segs.length - 1];
             const author = segs[segs.length - 2].replace('@', '');
-            const amount = 0.00001; // this.state;
+            const amount = '0.001'; // this.state;
             this.setState({ loading: true });
+            // let success = false;
+
+            const openPage = () => {
+                $(element).attr('href', $(element).attr('gs-url'));
+                element.click();
+            };
 
             const onSuccess = () => {
-                window.open(url, '_blank');
+                this.setState({ loading: false });
+                // success = true;
+                openPage();
             };
+
+            // const waitForSuccess = setInterval(() => {
+            //     if (success) {
+            //         openPage();
+            //         clearInterval(waitForSuccess);
+            //     }
+            // }, 200);
 
             console.log('-- PaidSearch.onSubmit -->');
             this.props.dispatchSubmit({
@@ -141,8 +163,8 @@ class PaidSearch extends React.Component {
                 asset: LIQUID_TOKEN_UPPERCASE,
                 author,
                 permlink,
-                onSuccess,
                 currentUser: this.props.currentUser,
+                onSuccess,
                 errorCallback: this.errorCallback,
             });
         }
@@ -207,8 +229,22 @@ class PaidSearch extends React.Component {
                         get_preview_element(e).hide();
                     })
                     .on('click', function(event) {
-                        event.preventDefault();
-                        page.onSubmit(e);
+                        // event.preventDefault();
+                        let href = $(e).attr('href');
+                        if (
+                            typeof href === typeof undefined ||
+                            href === false
+                        ) {
+                            page.onSubmit(e);
+                        }
+                        // else {
+                        //     let win = window.open();
+                        //     win.location = href;
+                        //     win.opener = null;
+                        //     win.blur();
+                        //     window.focus();
+                        //     // window.open(href, '_blank');
+                        // }
                     })
                     .on('mousedown', function(event) {
                         event.preventDefault();
@@ -321,7 +357,7 @@ const Search = connect(
                     symbol: LIQUID_TOKEN_UPPERCASE,
                     to: author,
                     quantity: amount,
-                    memo: `@${author}/${permlink}`,
+                    memo: `search and click: @${author}/${permlink}`,
                 },
             };
             const operation = {
@@ -330,9 +366,7 @@ const Search = connect(
                 json: JSON.stringify(transferOperation),
                 __config: {
                     successMessage:
-                        tt(
-                            'promote_post_jsx.you_successfully_promoted_this_post'
-                        ) + '.',
+                        tt('search_jsx.successfully_rewarded_the_author') + '.',
                 },
             };
             dispatch(

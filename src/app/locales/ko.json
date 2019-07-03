@@ -634,6 +634,10 @@
         "beware_of_spam_and_phishing_links":
             "메모에는 스팸과 피싱 링크가 포함 될 수 있으니 주의하십시오. 신뢰할 수없는 사용자의 링크를 열지 마십시오. 또한 다른 어떤 웹 사이트에도 개인키를 공개하지 마십시오."
     },
+    "search_jsx": {
+        "successfully_rewarded_the_author":
+            "당신은 성공적으로 저자에게 보상을주었습니다."
+    },
     "userwallet_jsx": {
         "conversion_complete_tip": "Will complete on",
         "in_conversion": "%(amount)s in conversion",
