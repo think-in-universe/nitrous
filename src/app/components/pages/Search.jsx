@@ -129,12 +129,40 @@ class PaidSearch extends React.Component {
         loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
     }
 
+    parsePost(element, attribute) {
+        const reserved_pages = [
+            'feed',
+            'transfers',
+            'followed',
+            'followers',
+            'comments',
+            'recent-replies',
+            'settings',
+        ];
+        if (element && element.getAttribute(attribute)) {
+            let segs = element.getAttribute(attribute).split('/');
+            let permlink = segs[segs.length - 1];
+            let author = segs[segs.length - 2];
+
+            if (
+                author.indexOf('@') != -1 &&
+                reserved_pages.indexOf(permlink) == -1
+            ) {
+                author = author.replace('@', '');
+                return {
+                    author,
+                    permlink,
+                };
+            }
+            return null;
+        }
+        return null;
+    }
+
     onSubmit(element) {
-        if (element && element.getAttribute('gs-url')) {
-            const url = element.getAttribute('gs-url');
-            let segs = url.split('/');
-            const permlink = segs[segs.length - 1];
-            const author = segs[segs.length - 2].replace('@', '');
+        const res = this.parsePost(element, 'gs-url');
+        if (res) {
+            const { author, permlink } = res;
             const amount = '0.001'; // this.state;
             this.setState({ loading: true });
             // let success = false;
@@ -176,9 +204,6 @@ class PaidSearch extends React.Component {
 
     addPreviews() {
         const page = this;
-        let remove_gse_url_redirect = false;
-
-        // const $ = document.querySelectorAll;
         const search_res_titles =
             'div.gsc-wrapper div.gsc-thumbnail-inside a.gs-title';
 
@@ -186,10 +211,9 @@ class PaidSearch extends React.Component {
 
         function render_preview(element) {
             // render the preview with steem.js
-            if (element && element.getAttribute('gs-url')) {
-                var segs = element.getAttribute('gs-url').split('/');
-                var permlink = segs[segs.length - 1];
-                var author = segs[segs.length - 2].replace('@', '');
+            const res = page.parsePost(element, 'gs-url');
+            if (res) {
+                const { author, permlink } = res;
                 steem.api.getContent(author, permlink, function(err, result) {
                     if (result && result.body) {
                         append_preview_element(element, result.body);
@@ -215,41 +239,44 @@ class PaidSearch extends React.Component {
         function add_event_listeners(e) {
             var events = $._data(e, 'events');
             if (!events || !events.mouseover || events.mouseover.length == 0) {
-                // update attribute
-                $(e)
-                    .attr('gs-url', $(e).attr('href'))
-                    .removeAttr('href');
+                const res = page.parsePost(e, 'href');
+                if (res) {
+                    // update attribute
+                    $(e)
+                        .attr('gs-url', $(e).attr('href'))
+                        .removeAttr('href');
 
-                $(e)
-                    .on('mouseover', function() {
-                        render_preview(this);
-                        get_preview_element(e).show();
-                    })
-                    .on('mouseout', function() {
-                        get_preview_element(e).hide();
-                    })
-                    .on('click', function(event) {
-                        // event.preventDefault();
-                        let href = $(e).attr('href');
-                        if (
-                            typeof href === typeof undefined ||
-                            href === false
-                        ) {
-                            page.onSubmit(e);
-                        }
-                        // else {
-                        //     let win = window.open();
-                        //     win.location = href;
-                        //     win.opener = null;
-                        //     win.blur();
-                        //     window.focus();
-                        //     // window.open(href, '_blank');
-                        // }
-                    })
-                    .on('mousedown', function(event) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    });
+                    $(e)
+                        .on('mouseover', function() {
+                            render_preview(this);
+                            get_preview_element(e).show();
+                        })
+                        .on('mouseout', function() {
+                            get_preview_element(e).hide();
+                        })
+                        .on('click', function(event) {
+                            // event.preventDefault();
+                            let href = $(e).attr('href');
+                            if (
+                                typeof href === typeof undefined ||
+                                href === false
+                            ) {
+                                page.onSubmit(e);
+                            }
+                            // else {
+                            //     let win = window.open();
+                            //     win.location = href;
+                            //     win.opener = null;
+                            //     win.blur();
+                            //     window.focus();
+                            //     // window.open(href, '_blank');
+                            // }
+                        })
+                        .on('mousedown', function(event) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        });
+                }
             }
         }
 
