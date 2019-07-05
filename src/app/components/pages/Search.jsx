@@ -11,6 +11,7 @@ import {
     PROMOTED_POST_ACCOUNT,
 } from 'app/client_config';
 // import MarkdownViewer from 'app/components/cards/MarkdownViewer';
+import { isLoggedIn } from 'app/utils/UserUtil';
 
 const GOOGLE_CUSTOM_SEARCH_ID = '002054531452547600153:c65zk0qbyd4';
 
@@ -33,27 +34,32 @@ class PaidSearch extends React.Component {
 
     render() {
         const { loading } = this.state;
-        return (
-            <div className="Search">
-                <div className="row medium-8 large-7 search-content">
-                    <div className="columns">
-                        {loading && (
-                            <span>
-                                <LoadingIndicator type="circle" />
-                                <br />
-                            </span>
-                        )}
-                        <br />
-                        {/* <gcse:search linktarget="_self"></gcse:search> */}
-                        <div
-                            id="search_renderer"
-                            className="gcse-searchbox"
-                            data-newWindow="true"
-                        />
+
+        if (isLoggedIn()) {
+            return (
+                <div className="Search">
+                    <div className="row medium-8 large-7 search-content">
+                        <div className="columns">
+                            {loading && (
+                                <span>
+                                    <LoadingIndicator type="circle" />
+                                    <br />
+                                </span>
+                            )}
+                            <br />
+                            {/* <gcse:search linktarget="_self"></gcse:search> */}
+                            <div
+                                id="search_renderer"
+                                className="gcse-searchbox"
+                                data-newWindow="true"
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
-        );
+            );
+        } else {
+            return <div />;
+        }
     }
 
     insertCSE() {

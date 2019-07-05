@@ -24,6 +24,7 @@ export default {
             cb(null, [require('app/components/pages/Faq')]);
             //});
         } else if (route.page === 'Login') {
+            f;
             //require.ensure([], (require) => {
             cb(null, [require('app/components/pages/Login')]);
             //});

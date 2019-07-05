@@ -327,14 +327,18 @@ class Header extends React.Component {
                                 </span>
                             )}
                             {/*CUSTOM SEARCH*/}
-                            <span className="Header__search--desktop">
-                                <SearchInput />
-                            </span>
-                            <span className="Header__search">
-                                <Link to="/search.html">
-                                    <IconButton icon="magnifyingGlass" />
-                                </Link>
-                            </span>
+                            {loggedIn && (
+                                <div>
+                                    <span className="Header__search--desktop">
+                                        <SearchInput />
+                                    </span>
+                                    <span className="Header__search">
+                                        <Link to="/search.html">
+                                            <IconButton icon="magnifyingGlass" />
+                                        </Link>
+                                    </span>
+                                </div>
+                            )}
                             {/*SUBMIT STORY*/}
                             {submit_story}
                             {/*USER AVATAR */}
