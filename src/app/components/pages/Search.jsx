@@ -12,6 +12,8 @@ import {
 } from 'app/client_config';
 // import MarkdownViewer from 'app/components/cards/MarkdownViewer';
 
+const GOOGLE_CUSTOM_SEARCH_ID = '002054531452547600153:c65zk0qbyd4';
+
 class PaidSearch extends React.Component {
     constructor(props) {
         super(props);
@@ -56,7 +58,7 @@ class PaidSearch extends React.Component {
 
     insertCSE() {
         // (function() {
-        const cx = '002054531452547600153:c65zk0qbyd4';
+        const cx = GOOGLE_CUSTOM_SEARCH_ID;
         let gcse = document.createElement('script');
         gcse.type = 'text/javascript';
         gcse.async = true;
@@ -163,36 +165,56 @@ class PaidSearch extends React.Component {
         const res = this.parsePost(element, 'gs-url');
         if (res) {
             const { author, permlink } = res;
-            const amount = '0.001'; // this.state;
+            const amount = 0.002;
+            const rewardRatio = 0.7;
+            let rewardSuccess = false,
+                burnSuccess = false;
+
             this.setState({ loading: true });
-            // let success = false;
 
             const openPage = () => {
+                this.setState({ loading: false });
                 $(element).attr('href', $(element).attr('gs-url'));
                 element.click();
             };
 
-            const onSuccess = () => {
-                this.setState({ loading: false });
-                // success = true;
-                openPage();
+            const onRewardSuccess = () => {
+                rewardSuccess = true;
+                // burn token
+                this.props.dispatchSubmit({
+                    amount: '0.001',
+                    asset: LIQUID_TOKEN_UPPERCASE,
+                    author,
+                    permlink,
+                    currentUser: this.props.currentUser,
+                    receiver: 'null',
+                    onSuccess: onBurnSuccess,
+                    errorCallback: this.errorCallback,
+                });
             };
 
-            // const waitForSuccess = setInterval(() => {
-            //     if (success) {
-            //         openPage();
-            //         clearInterval(waitForSuccess);
-            //     }
-            // }, 200);
+            const onBurnSuccess = () => {
+                burnSuccess = true;
+            };
+
+            const waitForSuccess = setInterval(() => {
+                if (burnSuccess) {
+                    openPage();
+                    clearInterval(waitForSuccess);
+                }
+            }, 200);
 
             console.log('-- PaidSearch.onSubmit -->');
+
+            // reward author
             this.props.dispatchSubmit({
-                amount,
+                amount: '0.002',
                 asset: LIQUID_TOKEN_UPPERCASE,
                 author,
                 permlink,
                 currentUser: this.props.currentUser,
-                onSuccess,
+                receiver: author,
+                onSuccess: onRewardSuccess,
                 errorCallback: this.errorCallback,
             });
         }
@@ -362,6 +384,7 @@ const Search = connect(
             author,
             permlink,
             currentUser,
+            receiver,
             onSuccess,
             errorCallback,
         }) => {
@@ -382,7 +405,7 @@ const Search = connect(
                 contractAction: 'transfer',
                 contractPayload: {
                     symbol: LIQUID_TOKEN_UPPERCASE,
-                    to: author,
+                    to: receiver,
                     quantity: amount,
                     memo: `search and click: @${author}/${permlink}`,
                 },
