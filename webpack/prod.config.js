@@ -9,7 +9,7 @@ module.exports = {
             'process.env': {
                 BROWSER: JSON.stringify(true),
                 NODE_ENV: JSON.stringify('production'),
-                VERSION: JSON.stringify(git.long())
+                VERSION: '1.0.1'
             }
         }),
         new webpack.optimize.UglifyJsPlugin({
