@@ -27,6 +27,7 @@ import userIllegalContent from 'app/utils/userIllegalContent';
 import ImageUserBlockList from 'app/utils/ImageUserBlockList';
 import LoadingIndicator from 'app/components/elements/LoadingIndicator';
 import { GoogleAd } from 'app/components/elements/GoogleAd';
+import PostRating from 'app/components/elements/Rating';
 import ContentEditedWrapper from '../elements/ContentEditedWrapper';
 
 function TimeAuthorCategory({ content, authorRepLog10, showTags }) {
@@ -87,6 +88,7 @@ class PostFull extends React.Component {
         unlock: PropTypes.func.isRequired,
         deletePost: PropTypes.func.isRequired,
         showPromotePost: PropTypes.func.isRequired,
+        showRatePost: PropTypes.func.isRequired,
         showExplorePost: PropTypes.func.isRequired,
     };
 
@@ -231,6 +233,16 @@ class PostFull extends React.Component {
         this.props.showPromotePost(author, permlink);
     };
 
+    showRatePost = rating => {
+        const post_content = this.props.cont.get(this.props.post);
+        if (!post_content) return;
+        const category = post_content.get('category');
+        const author = post_content.get('author');
+        const permlink = post_content.get('permlink');
+        const body = post_content.get('body');
+        this.props.showRatePost(category, author, permlink, body, rating);
+    };
+
     showExplorePost = () => {
         const permlink = this.share_params.link;
         const title = this.share_params.rawtitle;
@@ -251,6 +263,7 @@ class PostFull extends React.Component {
             onShowEdit,
             onDeletePost,
         } = this;
+
         const post_content = this.props.cont.get(this.props.post);
         if (!post_content) return null;
         const p = extractContent(immutableAccessor, post_content);
@@ -435,6 +448,10 @@ class PostFull extends React.Component {
         const showDeleteOption =
             username === author && content.stats.allowDelete && !_isPaidout;
 
+        // identify whether the post is selected during search
+        const selected = isPostSelected(author, permlink);
+        const showRating = username && username !== author && selected;
+
         const authorRepLog10 = repLog10(content.author_reputation);
         const isPreViewCount =
             Date.parse(post_content.get('created')) < 1480723200000; // check if post was created before view-count tracking began (2016-12-03)
@@ -545,6 +562,12 @@ class PostFull extends React.Component {
                         >
                             <Icon name="link" className="chain-right" />
                         </button>
+                        {showRating && (
+                            <PostRating
+                                className="float-right"
+                                onChange={this.showRatePost}
+                            />
+                        )}
                     </div>
                 </div>
                 <div className="row">
@@ -592,6 +615,14 @@ export default connect(
                 })
             );
         },
+        showRatePost: (category, author, permlink, body, rating) => {
+            dispatch(
+                globalActions.showDialog({
+                    name: 'ratePost',
+                    params: { category, author, permlink, body, rating },
+                })
+            );
+        },
         showExplorePost: (permlink, title) => {
             dispatch(
                 globalActions.showDialog({
@@ -616,5 +647,15 @@ const saveOnShow = (formId, type) => {
             localStorage.removeItem('replyEditorData-' + formId + '-reply');
             localStorage.removeItem('replyEditorData-' + formId + '-edit');
         }
+    }
+};
+
+const isPostSelected = (author, permlink) => {
+    if (process.env.BROWSER) {
+        return (
+            localStorage.getItem(`selected-@${author}/${permlink}`) === 'true'
+        );
+    } else {
+        return false;
     }
 };

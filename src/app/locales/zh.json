@@ -773,6 +773,17 @@
         "autocomplete_user_following": "following",
         "confirm_transfer": "Transfer %(amount)s from %(from)s to %(to)s?"
     },
+    "search_jsx": {
+        "successfully_rewarded_the_author": "您成功地奖励了这位作者"
+    },
+    "rate_post_jsx": {
+        "rate_post": "请给帖子评分",
+        "rate_post_and_get_vote":
+            "评分后会生成一个包含您的评分的回复，并且您的回复会得到自动点赞",
+        "confirm_rate_post": "您给这篇帖子的评分是： %(rating)s",
+        "rating_comment":
+            "@%(username)s 在搜索时，选择了 @%(author)s 的帖子。\n@%(author)s 将获得 %(reward)s %(DEBT_TOKEN)s 的奖励\n@%(username)s 对搜索结果的满意度为 %(rating)s 分。\n\n<div message=\"rating\" score=\"%(rating)s\" />"
+    },
     "userwallet_jsx": {
         "transfer": "Transfer",
         "conversion_complete_tip": "将完成在",
