@@ -767,7 +767,9 @@
         "rate_post": "Rate the Post",
         "rate_post_and_get_vote":
             "A comment that contains your rating will be generated and you'll be voted for your rating automatically",
-        "confirm_rate_post": "Your rating for this post is: %(rating)s"
+        "confirm_rate_post": "Your rating for this post is: %(rating)s",
+        "rating_comment":
+            "@%(username)s selected @%(author)s's post in search.\n@%(author)s will be given %(reward)s %(DEBT_TOKEN)s\n@%(username)s's search satisfaction score is %(rating)s point.\n\n<div message=\"rating\" score=\"%(rating)s\" />"
     },
     "userwallet_jsx": {
         "transfer": "Transfer",

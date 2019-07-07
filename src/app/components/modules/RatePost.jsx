@@ -5,16 +5,16 @@ import ReactDOM from 'react-dom';
 import * as transactionActions from 'app/redux/TransactionReducer';
 import * as globalActions from 'app/redux/GlobalReducer';
 import LoadingIndicator from 'app/components/elements/LoadingIndicator';
-import {
-    LIQUID_TOKEN_UPPERCASE,
-    PROMOTED_POST_ACCOUNT,
-} from 'app/client_config';
+import { LIQUID_TOKEN_UPPERCASE, APP_NAME, SCOT_TAG } from 'app/client_config';
 import tt from 'counterpart';
+import { Set } from 'immutable';
 
 class RatePost extends Component {
     static propTypes = {
+        category: PropTypes.string.isRequired,
         author: PropTypes.string.isRequired,
         permlink: PropTypes.string.isRequired,
+        body: PropTypes.string.isRequired,
         rating: PropTypes.number.isRequired,
     };
 
@@ -34,13 +34,22 @@ class RatePost extends Component {
 
     onSubmit(e) {
         e.preventDefault();
-        const { author, permlink, rating, onClose } = this.props;
+        const {
+            category,
+            author,
+            permlink,
+            body,
+            rating,
+            onClose,
+        } = this.props;
         const { amount } = this.state;
         this.setState({ loading: true });
         console.log('-- RatePost.onSubmit -->');
         this.props.dispatchSubmit({
+            category,
             author,
             permlink,
+            body,
             rating,
             onClose,
             currentUser: this.props.currentUser,
@@ -61,13 +70,10 @@ class RatePost extends Component {
                         <h4>{tt('rate_post_jsx.rate_post')}</h4>
                         <p>{tt('rate_post_jsx.rate_post_and_get_vote')}.</p>
                         <hr />
-                        <div className="row">
-                            <div className="column small-7 medium-5 large-4">
-                                {tt('rate_post_jsx.confirm_rate_post', {
-                                    rating,
-                                })}
-                            </div>
-                        </div>
+                        <p>
+                            {' '}
+                            {tt('rate_post_jsx.confirm_rate_post', { rating })}
+                        </p>
                         <br />
                         {loading && (
                             <span>
@@ -108,8 +114,10 @@ export default connect(
     // mapDispatchToProps
     dispatch => ({
         dispatchSubmit: ({
+            category,
             author,
             permlink,
+            body,
             rating,
             currentUser,
             onClose,
@@ -134,14 +142,50 @@ export default connect(
             //             ) + '.',
             //     },
             // };
+
+            const get_metadata = () => {
+                // add root category
+                const rootCategory = category;
+                let allCategories = Set([]);
+                if (/^[-a-z\d]+$/.test(rootCategory))
+                    allCategories = allCategories.add(rootCategory);
+
+                // Add scot tag
+                allCategories = allCategories.add(SCOT_TAG);
+
+                // merge
+                const meta = {};
+                if (allCategories.size) meta.tags = allCategories.toJS();
+                meta.app = `${APP_NAME.toLowerCase()}/0.1`;
+                meta.format = 'markdown';
+                return meta;
+            };
+
+            const rate_template = (username, author, rating, reward) => {
+                return tt('rate_post_jsx.rating_comment', {
+                    username,
+                    author,
+                    rating,
+                    reward,
+                    DEBT_TOKEN: LIQUID_TOKEN_UPPERCASE,
+                });
+            };
+
+            // const originalBody = body;
+            const __config = {};
+
             const operation = {
-                ...linkProps,
-                category: rootCategory,
-                title,
-                body,
-                json_metadata: meta,
+                parent_author: author,
+                parent_permlink: permlink,
+                author: username,
+                permlink: `re-rating-${author}-${permlink}`, // only one
+                category: category,
+                title: '',
+                body: rate_template(username, author, rating, 0.7),
+                json_metadata: get_metadata(),
                 __config,
             };
+
             dispatch(
                 transactionActions.broadcastOperation({
                     type: 'comment',

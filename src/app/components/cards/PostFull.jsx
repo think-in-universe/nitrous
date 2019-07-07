@@ -226,9 +226,11 @@ class PostFull extends React.Component {
     showRatePost = rating => {
         const post_content = this.props.cont.get(this.props.post);
         if (!post_content) return;
+        const category = post_content.get('category');
         const author = post_content.get('author');
         const permlink = post_content.get('permlink');
-        this.props.showRatePost(author, permlink, rating);
+        const body = post_content.get('body');
+        this.props.showRatePost(category, author, permlink, body, rating);
     };
 
     showExplorePost = () => {
@@ -595,11 +597,11 @@ export default connect(
                 })
             );
         },
-        showRatePost: (author, permlink, rating) => {
+        showRatePost: (category, author, permlink, body, rating) => {
             dispatch(
                 globalActions.showDialog({
                     name: 'ratePost',
-                    params: { author, permlink, rating },
+                    params: { category, author, permlink, body, rating },
                 })
             );
         },
