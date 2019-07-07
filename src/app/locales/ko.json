@@ -638,6 +638,12 @@
         "successfully_rewarded_the_author":
             "당신은 성공적으로 저자에게 보상을주었습니다."
     },
+    "rate_post_jsx": {
+        "rate_post": "포스트 평가",
+        "rate_post_and_get_vote":
+            "귀하의 평점이 포함 된 의견이 생성되며 자동으로 평점에 투표하게됩니다",
+        "confirm_rate_post": "해당 게시물의 등급은: %(rating)s"
+    },
     "userwallet_jsx": {
         "conversion_complete_tip": "Will complete on",
         "in_conversion": "%(amount)s in conversion",

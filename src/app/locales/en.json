@@ -763,6 +763,12 @@
         "successfully_rewarded_the_author":
             "You have successfully rewarded the author"
     },
+    "rate_post_jsx": {
+        "rate_post": "Rate the Post",
+        "rate_post_and_get_vote":
+            "A comment that contains your rating will be generated and you'll be voted for your rating automatically",
+        "confirm_rate_post": "Your rating for this post is: %(rating)s"
+    },
     "userwallet_jsx": {
         "transfer": "Transfer",
         "conversion_complete_tip": "Will complete on %(date)s",

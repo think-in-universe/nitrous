@@ -582,6 +582,12 @@
     "search_jsx": {
         "successfully_rewarded_the_author": "你成功地奖励了这位作者"
     },
+    "rate_post_jsx": {
+        "rate_post": "请给帖子评分",
+        "rate_post_and_get_vote":
+            "评分后会生成一个包含你的评分的回复，并且你的回复会得到自动点赞",
+        "confirm_rate_post": "你给这篇帖子的评分是： %(rating)s"
+    },
     "userwallet_jsx": {
         "conversion_complete_tip": "将完成在",
         "in_conversion": "%(amount)s在转换",

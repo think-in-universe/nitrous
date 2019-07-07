@@ -78,7 +78,7 @@ class PostFull extends React.Component {
         unlock: PropTypes.func.isRequired,
         deletePost: PropTypes.func.isRequired,
         showPromotePost: PropTypes.func.isRequired,
-        confirmRating: PropTypes.func.isRequired,
+        showRatePost: PropTypes.func.isRequired,
         showExplorePost: PropTypes.func.isRequired,
     };
 
@@ -223,12 +223,12 @@ class PostFull extends React.Component {
         this.props.showPromotePost(author, permlink);
     };
 
-    confirmRating = () => {
+    showRatePost = rating => {
         const post_content = this.props.cont.get(this.props.post);
         if (!post_content) return;
         const author = post_content.get('author');
         const permlink = post_content.get('permlink');
-        this.props.confirmRating(author, permlink);
+        this.props.showRatePost(author, permlink, rating);
     };
 
     showExplorePost = () => {
@@ -545,7 +545,7 @@ class PostFull extends React.Component {
                         {showRating && (
                             <PostRating
                                 className="float-right"
-                                onChange={this.confirmRating}
+                                onChange={this.showRatePost}
                             />
                         )}
                     </div>
@@ -595,11 +595,11 @@ export default connect(
                 })
             );
         },
-        confirmRating: (author, permlink) => {
+        showRatePost: (author, permlink, rating) => {
             dispatch(
                 globalActions.showDialog({
-                    name: 'confirmRating',
-                    params: { author, permlink },
+                    name: 'ratePost',
+                    params: { author, permlink, rating },
                 })
             );
         },
