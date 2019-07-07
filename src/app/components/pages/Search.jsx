@@ -28,8 +28,6 @@ class PaidSearch extends React.Component {
         this.onSubmit = this.onSubmit.bind(this);
         this.errorCallback = this.errorCallback.bind(this);
         this.addPreviews = this.addPreviews.bind(this);
-        // this.amountChange = this.amountChange.bind(this);
-        // this.assetChange = this.assetChange.bind(this);
     }
 
     render() {
@@ -179,6 +177,8 @@ class PaidSearch extends React.Component {
             this.setState({ loading: true });
 
             const openPage = () => {
+                // save the selected status in local storage
+                localStorage.setItem(`selected-@${author}/${permlink}`, 'true');
                 this.setState({ loading: false });
                 $(element).attr('href', $(element).attr('gs-url'));
                 element.click();
@@ -212,17 +212,21 @@ class PaidSearch extends React.Component {
 
             console.log('-- PaidSearch.onSubmit -->');
 
-            // reward author
-            this.props.dispatchSubmit({
-                amount: '0.002',
-                asset: LIQUID_TOKEN_UPPERCASE,
-                author,
-                permlink,
-                currentUser: this.props.currentUser,
-                receiver: author,
-                onSuccess: onRewardSuccess,
-                errorCallback: this.errorCallback,
-            });
+            const paySelectedPost = () => {
+                // reward author
+                this.props.dispatchSubmit({
+                    amount: '0.002',
+                    asset: LIQUID_TOKEN_UPPERCASE,
+                    author,
+                    permlink,
+                    currentUser: this.props.currentUser,
+                    receiver: author,
+                    onSuccess: onRewardSuccess,
+                    errorCallback: this.errorCallback,
+                });
+            };
+
+            paySelectedPost();
         }
     }
 

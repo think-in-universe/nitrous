@@ -241,6 +241,7 @@ class PostFull extends React.Component {
             onShowEdit,
             onDeletePost,
         } = this;
+
         const post_content = this.props.cont.get(this.props.post);
         if (!post_content) return null;
         const p = extractContent(immutableAccessor, post_content);
@@ -254,6 +255,10 @@ class PostFull extends React.Component {
         const { category, title, body } = content;
         if (process.env.BROWSER && title)
             document.title = title + ' — ' + APP_NAME;
+
+        // identify whether the post is selected during search
+        const selected =
+            localStorage.getItem(`selected-@${author}/${permlink}`) === 'true';
 
         let content_body = content.body;
         const url = `/${category}/@${author}/${permlink}`;
