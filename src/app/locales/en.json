@@ -247,7 +247,12 @@
             "warning":
                 "Legitimate users, including employees of Steemit Inc., will never ask you for a private key or master password.",
             "checkbox": "I understand"
-        }
+        },
+        "total": "Total",
+        "circulating": "Circulating",
+        "burn": "Burn",
+        "staking": "Staking",
+        "written_from": "written from %(app_name)s"
     },
     "navigation": {
         "about": "About Steemit, Inc.",
@@ -433,7 +438,8 @@
             "one": "%(count)s vote",
             "other": "%(count)s votes"
         },
-        "voting_power": "Voting Power"
+        "voting_power": "Voting Power",
+        "estimated_vote": "Estimated Vote Value"
     },
     "votesandcomments_jsx": {
         "no_responses_yet_click_to_respond":
