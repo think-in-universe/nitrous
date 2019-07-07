@@ -1,5 +1,4 @@
 const webpack = require('webpack');
-const git = require('git-rev-sync');
 const baseConfig = require('./base.config');
 
 module.exports = {
@@ -9,7 +8,6 @@ module.exports = {
             'process.env': {
                 BROWSER: JSON.stringify(true),
                 NODE_ENV: JSON.stringify('production'),
-                VERSION: '1.0.1'
             }
         }),
         new webpack.optimize.UglifyJsPlugin({

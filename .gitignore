@@ -5,7 +5,6 @@ node_modules
 *.log
 dist
 vendor/*
-tmp/*
 .vagrant
 lib
 

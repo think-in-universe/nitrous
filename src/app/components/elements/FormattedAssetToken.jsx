@@ -22,9 +22,11 @@ const FormattedAssetToken = ({ balance, stake, symbol }) => {
         <span className={`FormattedAssetToken`}>
             <span className="prefix"> {symbol} </span>
             <span className="integer">{bal[0]}</span>
-            <span className="decimal">{bal[1]}</span>{'('}
+            <span className="decimal">{bal[1]}</span>
+            {'('}
             <span className="integer">{stk[0]}</span>
-            <span className="decimal">{stk[1]}</span>{')'}
+            <span className="decimal">{stk[1]}</span>
+            {')'}
         </span>
     ) : (
         <span className={`FormattedAssetToken`}>

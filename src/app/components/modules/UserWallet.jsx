@@ -20,7 +20,6 @@ import * as globalActions from 'app/redux/GlobalReducer';
 import DropdownMenu from 'app/components/elements/DropdownMenu';
 import FormattedAssetToken from 'app/components/elements/FormattedAssetToken';
 
-
 class UserWallet extends React.Component {
     constructor() {
         super();
@@ -223,23 +222,16 @@ class UserWallet extends React.Component {
         // added by realmankwon (2019-06-12) add all token balances
         let all_token_balances_list = [];
 
-        if(account.has('all_token_balances'))
-        {
-            const allTokenBalances = account.get('all_token_balances').toJS()
-        
+        if (account.has('all_token_balances')) {
+            const allTokenBalances = account.get('all_token_balances').toJS();
+
             // added by realmankwon (2019-06-18) sort by alphabet asc
-            allTokenBalances.sort(
-                (a, b) =>
-                    a.symbol >
-                    b.symbol
-                        ? 1
-                        : -1
-            );
+            allTokenBalances.sort((a, b) => (a.symbol > b.symbol ? 1 : -1));
 
             for (let v = 0; v < allTokenBalances.length; ++v) {
                 const tokenBalance = allTokenBalances[v];
-                // added by realmankwon (2019-06-18) except LIQUID_TOKEN_UPPERCASE 
-                if(tokenBalance.symbol === LIQUID_TOKEN_UPPERCASE) continue;
+                // added by realmankwon (2019-06-18) except LIQUID_TOKEN_UPPERCASE
+                if (tokenBalance.symbol === LIQUID_TOKEN_UPPERCASE) continue;
 
                 all_token_balances_list.push(
                     <span>
@@ -348,13 +340,11 @@ class UserWallet extends React.Component {
                         </div>
                     </div>
                 )}
-                
+
                 <div className="row">
+                    <div className="column small-12">Steem Engine Token</div>
                     <div className="column small-12">
-                        Steem Engine Token
-                    </div>
-                    <div className="column small-12">
-                        <br/>
+                        <br />
                         {all_token_balances_list}
                     </div>
                 </div>

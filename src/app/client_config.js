@@ -9,8 +9,8 @@ export const APP_NAME_UPPERCASE = 'STEEMCOINPAN';
 export const APP_ICON = 'steemcoinpan';
 // FIXME figure out best way to do this on both client and server from env
 // vars. client should read $STM_Config, server should read config package.
-export const APP_URL = 'https://www.steemcoinpan.com';
-export const APP_DOMAIN = 'www.steemcoinpan.com';
+export const APP_URL = 'https://steemcoinpancn.herokuapp.com';
+export const APP_DOMAIN = 'https://steemcoinpancn.herokuapp.com';
 export const SCOT_TAG = 'sct';
 export const TAG_LIST = List([
     'notice',

@@ -61,6 +61,7 @@ class PostSummary extends React.Component {
 
     render() {
         const { thumbSize, ignore } = this.props;
+
         const {
             post,
             promoted,

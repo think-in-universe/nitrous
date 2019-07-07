@@ -65,23 +65,21 @@ const SidePanel = ({
                 link: `https://freedomex.io/trading/${
                     LIQUID_TOKEN_UPPERCASE
                 }freex`,
-            },  
+            },
         ],
         internal_support: [
             {
                 value: 'steemengineblockexplorer',
                 label: 'Steem Engine Block Explorer',
-                link: `https://steem-engine.rocks/@${
-                     username
-                }`,
+                link: `https://steem-engine.rocks/@${username}`,
             },
             {
                 value: 'richlist',
                 label: 'Rich list',
                 link: `https://steem-engine.rocks/tokens/${
-                     LIQUID_TOKEN_UPPERCASE
+                    LIQUID_TOKEN_UPPERCASE
                 }/richlist`,
-            },    
+            },
         ],
 
         exchanges: [
@@ -202,7 +200,6 @@ const SidePanel = ({
                         </a>
                     </li>
                     {sidePanelLinks['internal_support'].map(makeLink)}
-
                 </ul>
             </div>
         </div>
