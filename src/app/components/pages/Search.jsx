@@ -12,6 +12,7 @@ import {
 } from 'app/client_config';
 // import MarkdownViewer from 'app/components/cards/MarkdownViewer';
 import { isLoggedIn } from 'app/utils/UserUtil';
+import { api } from '@steemit/steem-js';
 
 const GOOGLE_CUSTOM_SEARCH_ID = '002054531452547600153:c65zk0qbyd4';
 
@@ -131,7 +132,6 @@ class PaidSearch extends React.Component {
             'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js',
             callback
         );
-        loadScript('//cdn.steemjs.com/lib/latest/steem.min.js');
         loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
     }
 
@@ -236,8 +236,7 @@ class PaidSearch extends React.Component {
 
     addPreviews() {
         const page = this;
-        const search_res_titles =
-            'div.gsc-wrapper div.gsc-thumbnail-inside a.gs-title';
+        const search_res_titles = 'div.gs-webResult.gs-result a[data-cturl]';
 
         // steem.api.setOptions({ url: 'https://steemd.minnowsupportproject.org' });
 
@@ -246,7 +245,7 @@ class PaidSearch extends React.Component {
             const res = page.parsePost(element, 'gs-url');
             if (res) {
                 const { author, permlink } = res;
-                steem.api.getContent(author, permlink, function(err, result) {
+                api.getContent(author, permlink, function(err, result) {
                     if (result && result.body) {
                         append_preview_element(element, result.body);
                     }
