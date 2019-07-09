@@ -255,8 +255,15 @@ class PaidSearch extends React.Component {
 
         function clean_markdown(md) {
             // remove image tag
-            md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
-            return marked(md);
+            // md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
+            let h = marked(md);
+            h = $('<p>')
+                .html(h)
+                .find('img')
+                .remove()
+                .end()
+                .html();
+            return h;
         }
 
         function get_preview_element(e) {
