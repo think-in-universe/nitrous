@@ -9,12 +9,13 @@ import {
     APP_NAME,
     LIQUID_TOKEN_UPPERCASE,
     PROMOTED_POST_ACCOUNT,
+    GOOGLE_CUSTOM_SEARCH_ID,
+    SEARCH_SELECTION_REWARD_AMOUNT,
+    SEARCH_SELECTION_BURN_AMOUNT,
 } from 'app/client_config';
 // import MarkdownViewer from 'app/components/cards/MarkdownViewer';
 import { isLoggedIn } from 'app/utils/UserUtil';
 import { api } from '@steemit/steem-js';
-
-const GOOGLE_CUSTOM_SEARCH_ID = '002054531452547600153:c65zk0qbyd4';
 
 class PaidSearch extends React.Component {
     constructor(props) {
@@ -169,11 +170,6 @@ class PaidSearch extends React.Component {
         const res = this.parsePost(element, 'gs-url');
         if (res) {
             const { author, permlink } = res;
-            const amount = 0.002;
-            const rewardRatio = 0.7;
-            let rewardSuccess = false,
-                burnSuccess = false;
-
             this.setState({ loading: true });
 
             const openPage = () => {
@@ -185,37 +181,21 @@ class PaidSearch extends React.Component {
             };
 
             const onRewardSuccess = () => {
-                rewardSuccess = true;
-                // burn token
-                this.props.dispatchSubmit({
-                    amount: '0.001',
-                    asset: LIQUID_TOKEN_UPPERCASE,
-                    author,
-                    permlink,
-                    currentUser: this.props.currentUser,
-                    receiver: 'null',
-                    onSuccess: onBurnSuccess,
-                    errorCallback: this.errorCallback,
-                });
+                openPage();
             };
 
-            const onBurnSuccess = () => {
-                burnSuccess = true;
-            };
-
-            const waitForSuccess = setInterval(() => {
-                if (burnSuccess) {
-                    openPage();
-                    clearInterval(waitForSuccess);
-                }
-            }, 200);
+            // const waitForSuccess = setInterval(() => {
+            //     if (success) {
+            //         openPage();
+            //         clearInterval(waitForSuccess);
+            //     }
+            // }, 200);
 
             console.log('-- PaidSearch.onSubmit -->');
 
             const paySelectedPost = () => {
                 // reward author
                 this.props.dispatchSubmit({
-                    amount: '0.002',
                     asset: LIQUID_TOKEN_UPPERCASE,
                     author,
                     permlink,
@@ -255,8 +235,15 @@ class PaidSearch extends React.Component {
 
         function clean_markdown(md) {
             // remove image tag
-            md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
-            return marked(md);
+            // md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
+            let h = marked(md);
+            h = $('<p>')
+                .html(h)
+                .find('img')
+                .remove()
+                .end()
+                .html();
+            return h;
         }
 
         function get_preview_element(e) {
@@ -388,7 +375,6 @@ const Search = connect(
     // mapDispatchToProps
     dispatch => ({
         dispatchSubmit: ({
-            amount,
             asset,
             author,
             permlink,
@@ -409,25 +395,38 @@ const Search = connect(
                 ); // refresh transfer history
                 onSuccess();
             };
-            const transferOperation = {
-                contractName: 'tokens',
-                contractAction: 'transfer',
-                contractPayload: {
-                    symbol: LIQUID_TOKEN_UPPERCASE,
-                    to: receiver,
-                    quantity: amount,
-                    memo: `search and click: @${author}/${permlink}`,
-                },
+
+            const buildTransferOperation = (receiver, amount) => {
+                return {
+                    contractName: 'tokens',
+                    contractAction: 'transfer',
+                    contractPayload: {
+                        symbol: LIQUID_TOKEN_UPPERCASE,
+                        to: receiver,
+                        quantity: amount.toString(),
+                        memo: `search and click: @${author}/${permlink}`,
+                    },
+                };
             };
+
+            const transferOperations = [
+                buildTransferOperation(
+                    receiver,
+                    SEARCH_SELECTION_REWARD_AMOUNT
+                ),
+                buildTransferOperation('null', SEARCH_SELECTION_BURN_AMOUNT),
+            ];
+
             const operation = {
                 id: 'ssc-mainnet1',
                 required_auths: [username],
-                json: JSON.stringify(transferOperation),
+                json: JSON.stringify(transferOperations),
                 __config: {
                     successMessage:
                         tt('search_jsx.successfully_rewarded_the_author') + '.',
                 },
             };
+
             dispatch(
                 transactionActions.broadcastOperation({
                     type: 'custom_json',
