@@ -5,17 +5,20 @@ import ReactDOM from 'react-dom';
 import * as transactionActions from 'app/redux/TransactionReducer';
 import * as globalActions from 'app/redux/GlobalReducer';
 import LoadingIndicator from 'app/components/elements/LoadingIndicator';
-import { LIQUID_TOKEN_UPPERCASE, APP_NAME, SCOT_TAG } from 'app/client_config';
+import {
+    APP_NAME,
+    SCOT_TAG,
+    LIQUID_TOKEN_UPPERCASE,
+    SEARCH_SELECTION_REWARD_AMOUNT,
+    SEARCH_SELECTION_BURN_AMOUNT,
+} from 'app/client_config';
 import tt from 'counterpart';
-import { Set } from 'immutable';
 
-class RatePost extends Component {
+class RewardPost extends Component {
     static propTypes = {
-        category: PropTypes.string.isRequired,
         author: PropTypes.string.isRequired,
         permlink: PropTypes.string.isRequired,
-        body: PropTypes.string.isRequired,
-        rating: PropTypes.number.isRequired,
+        onSuccess: PropTypes.func,
     };
 
     constructor(props) {
@@ -34,45 +37,55 @@ class RatePost extends Component {
 
     onSubmit(e) {
         e.preventDefault();
-        const {
-            category,
-            author,
-            permlink,
-            body,
-            rating,
-            onClose,
-        } = this.props;
-        const { amount } = this.state;
+        const { author, permlink, onSuccess, onClose } = this.props;
         this.setState({ loading: true });
-        console.log('-- RatePost.onSubmit -->');
+
+        console.log('-- RewardPost.onSubmit -->');
+
+        // reward author
         this.props.dispatchSubmit({
-            category,
+            asset: LIQUID_TOKEN_UPPERCASE,
             author,
             permlink,
-            body,
-            rating,
-            onClose,
             currentUser: this.props.currentUser,
+            onSuccess,
+            onClose,
             errorCallback: this.errorCallback,
         });
     }
 
     render() {
-        const { amount, loading, amountError, trxError } = this.state;
-        const { currentUser, rating } = this.props;
+        const { loading, trxError } = this.state;
+        const { currentUser, author } = this.props;
 
-        const submitDisabled = !rating;
+        const DEBT_TOKEN = LIQUID_TOKEN_UPPERCASE;
+        const amount =
+            SEARCH_SELECTION_REWARD_AMOUNT + SEARCH_SELECTION_BURN_AMOUNT;
+        const reward_amount = SEARCH_SELECTION_REWARD_AMOUNT;
+        const burn_amount = SEARCH_SELECTION_BURN_AMOUNT;
+        const submitDisabled = !author || !amount;
 
         return (
-            <div className="RatePost row">
+            <div className="RewardPost row">
                 <div className="column small-12">
                     <form onSubmit={this.onSubmit}>
-                        <h4>{tt('rate_post_jsx.rate_post')}</h4>
-                        <p>{tt('rate_post_jsx.rate_post_and_get_vote')}.</p>
+                        <h4>{tt('reward_post_jsx.reward_post')}</h4>
+                        <p>
+                            {tt('reward_post_jsx.reward_post_and_get_vote', {
+                                amount,
+                                DEBT_TOKEN,
+                            })}
+                        </p>
                         <hr />
                         <p>
                             {' '}
-                            {tt('rate_post_jsx.confirm_rate_post', { rating })}
+                            {tt('reward_post_jsx.confirm_reward_post', {
+                                amount,
+                                DEBT_TOKEN,
+                                author,
+                                reward_amount,
+                                burn_amount,
+                            })}
                         </p>
                         <br />
                         {loading && (
@@ -102,9 +115,6 @@ class RatePost extends Component {
     }
 }
 
-// const AssetBalance = ({onClick, balanceValue}) =>
-//     <a onClick={onClick} style={{borderBottom: '#A09F9F 1px dotted', cursor: 'pointer'}}>Balance: {balanceValue}</a>
-
 export default connect(
     (state, ownProps) => {
         const currentUser = state.user.getIn(['current']);
@@ -114,75 +124,64 @@ export default connect(
     // mapDispatchToProps
     dispatch => ({
         dispatchSubmit: ({
-            category,
+            asset,
             author,
             permlink,
-            body,
-            rating,
             currentUser,
+            onSuccess,
             onClose,
             errorCallback,
         }) => {
+            if (!currentUser) {
+                return;
+            }
+
             const username = currentUser.get('username');
 
             const successCallback = () => {
-                // dispatch(
-                //     globalActions.getState({ url: `@${username}/transfers` })
-                // );
+                dispatch(
+                    globalActions.getState({ url: `@${username}/transfers` })
+                ); // refresh transfer history
+                onSuccess();
                 onClose();
             };
 
-            const get_metadata = () => {
-                // add root category
-                const rootCategory = category;
-                let allCategories = Set([]);
-                if (/^[-a-z\d]+$/.test(rootCategory))
-                    allCategories = allCategories.add(rootCategory);
-
-                // Add scot tag
-                allCategories = allCategories.add(SCOT_TAG);
-
-                // merge
-                const meta = {};
-                if (allCategories.size) meta.tags = allCategories.toJS();
-                meta.app = `${APP_NAME.toLowerCase()}/0.1`;
-                meta.format = 'markdown';
-                return meta;
+            const buildTransferOperation = (receiver, amount) => {
+                return {
+                    contractName: 'tokens',
+                    contractAction: 'transfer',
+                    contractPayload: {
+                        symbol: LIQUID_TOKEN_UPPERCASE,
+                        to: receiver,
+                        quantity: amount.toString(),
+                        memo: `search and click: @${author}/${permlink}`,
+                    },
+                };
             };
 
-            const rate_template = (username, author, rating, reward) => {
-                return tt('rate_post_jsx.rating_comment', {
-                    username,
-                    author,
-                    rating,
-                    reward,
-                    DEBT_TOKEN: LIQUID_TOKEN_UPPERCASE,
-                });
-            };
-
-            // const originalBody = body;
-            const __config = {};
+            const transferOperations = [
+                buildTransferOperation(author, SEARCH_SELECTION_REWARD_AMOUNT),
+                buildTransferOperation('null', SEARCH_SELECTION_BURN_AMOUNT),
+            ];
 
             const operation = {
-                parent_author: author,
-                parent_permlink: permlink,
-                author: username,
-                permlink: `re-rating-${author}-${permlink}`, // only one
-                category: category,
-                title: '',
-                body: rate_template(username, author, rating, 0.7),
-                json_metadata: get_metadata(),
-                __config,
+                id: 'ssc-mainnet1',
+                required_auths: [username],
+                json: JSON.stringify(transferOperations),
+                __config: {
+                    successMessage:
+                        tt('search_jsx.successfully_rewarded_the_author') + '.',
+                },
             };
 
             dispatch(
                 transactionActions.broadcastOperation({
-                    type: 'comment',
+                    type: 'custom_json',
                     operation,
-                    errorCallback,
                     successCallback,
+                    errorCallback,
                 })
             );
         },
     })
-)(RatePost);
+)(RewardPost);

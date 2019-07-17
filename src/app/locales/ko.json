@@ -822,6 +822,13 @@
         "rating_comment":
             "@%(username)s 검색 중, 선택됨 @%(author)s 우편.\n@%(author)s 얻을 것이다 %(reward)s %(DEBT_TOKEN)s 보상\n@%(username)s 검색 결과에 대한 만족도는 %(rating)s .\n\n<div message=\"rating\" score=\"%(rating)s\" />"
     },
+    "reward_post_jsx": {
+        "reward_post": "이 기사의 저자에게 보상하기",
+        "reward_post_and_get_vote":
+            "이 기사를 계속 읽고 싶다면 지불해야합니다 %(amount)s %(DEBT_TOKEN)s 저자에게 보상하는 데 사용됩니다. 그러나이 기사를 읽고 등급을 매기고 나면 SCT 팀이 평가 및 평가에 감사하다는 메시지를 평가할 것입니다.",
+        "confirm_reward_post":
+            "지출해야 할 것입니다 %(amount)s %(DEBT_TOKEN)s 저자에게 보상하기 위해 사용됨 @%(author)s . 이 보상들 중에서, %(reward_amount)s 저자에게 지급됩니다 @%(author)s, 남은 %(burn_amount)s 파괴 될 것이다 (보내기 @null 계정)."
+    },
     "userwallet_jsx": {
         "transfer": "Transfer",
         "conversion_complete_tip": "Will complete on",

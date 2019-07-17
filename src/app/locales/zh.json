@@ -784,6 +784,13 @@
         "rating_comment":
             "@%(username)s 在搜索时，选择了 @%(author)s 的帖子。\n@%(author)s 将获得 %(reward)s %(DEBT_TOKEN)s 的奖励\n@%(username)s 对搜索结果的满意度为 %(rating)s 分。\n\n<div message=\"rating\" score=\"%(rating)s\" />"
     },
+    "reward_post_jsx": {
+        "reward_post": "奖励这篇文章的作者",
+        "reward_post_and_get_vote":
+            "如果您想要继续阅读此文，您需要支付 %(amount)s %(DEBT_TOKEN)s 用于奖励作者。但是，请不用担心，当您阅读完此文，并且给它评分后，SCT团队将对您的评分留言进行点赞，以感谢您的参与与评价。",
+        "confirm_reward_post":
+            "您将要花费 %(amount)s %(DEBT_TOKEN)s 用于奖励作者 @%(author)s。这些奖励中， %(reward_amount)s 将会支付给作者 @%(author)s，剩余的 %(burn_amount)s 将会被销毁（发送给 @null 账户)。"
+    },
     "userwallet_jsx": {
         "transfer": "Transfer",
         "conversion_complete_tip": "将完成在",

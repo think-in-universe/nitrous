@@ -27,7 +27,6 @@ class PaidSearch extends React.Component {
             amountError: '',
             trxError: '',
         };
-        this.onSubmit = this.onSubmit.bind(this);
         this.errorCallback = this.errorCallback.bind(this);
         this.addPreviews = this.addPreviews.bind(this);
     }
@@ -166,11 +165,10 @@ class PaidSearch extends React.Component {
         return null;
     }
 
-    onSubmit(element) {
+    showRewardPost(element) {
         const res = this.parsePost(element, 'gs-url');
         if (res) {
             const { author, permlink } = res;
-            this.setState({ loading: true });
 
             const openPage = () => {
                 // save the selected status in local storage
@@ -180,33 +178,7 @@ class PaidSearch extends React.Component {
                 element.click();
             };
 
-            const onRewardSuccess = () => {
-                openPage();
-            };
-
-            // const waitForSuccess = setInterval(() => {
-            //     if (success) {
-            //         openPage();
-            //         clearInterval(waitForSuccess);
-            //     }
-            // }, 200);
-
-            console.log('-- PaidSearch.onSubmit -->');
-
-            const paySelectedPost = () => {
-                // reward author
-                this.props.dispatchSubmit({
-                    asset: LIQUID_TOKEN_UPPERCASE,
-                    author,
-                    permlink,
-                    currentUser: this.props.currentUser,
-                    receiver: author,
-                    onSuccess: onRewardSuccess,
-                    errorCallback: this.errorCallback,
-                });
-            };
-
-            paySelectedPost();
+            this.props.showRewardPost(author, permlink, openPage);
         }
     }
 
@@ -279,7 +251,7 @@ class PaidSearch extends React.Component {
                                 typeof href === typeof undefined ||
                                 href === false
                             ) {
-                                page.onSubmit(e);
+                                page.showRewardPost(e);
                             }
                             // else {
                             //     let win = window.open();
@@ -374,65 +346,11 @@ const Search = connect(
 
     // mapDispatchToProps
     dispatch => ({
-        dispatchSubmit: ({
-            asset,
-            author,
-            permlink,
-            currentUser,
-            receiver,
-            onSuccess,
-            errorCallback,
-        }) => {
-            if (!currentUser) {
-                return;
-            }
-
-            const username = currentUser.get('username');
-
-            const successCallback = () => {
-                dispatch(
-                    globalActions.getState({ url: `@${username}/transfers` })
-                ); // refresh transfer history
-                onSuccess();
-            };
-
-            const buildTransferOperation = (receiver, amount) => {
-                return {
-                    contractName: 'tokens',
-                    contractAction: 'transfer',
-                    contractPayload: {
-                        symbol: LIQUID_TOKEN_UPPERCASE,
-                        to: receiver,
-                        quantity: amount.toString(),
-                        memo: `search and click: @${author}/${permlink}`,
-                    },
-                };
-            };
-
-            const transferOperations = [
-                buildTransferOperation(
-                    receiver,
-                    SEARCH_SELECTION_REWARD_AMOUNT
-                ),
-                buildTransferOperation('null', SEARCH_SELECTION_BURN_AMOUNT),
-            ];
-
-            const operation = {
-                id: 'ssc-mainnet1',
-                required_auths: [username],
-                json: JSON.stringify(transferOperations),
-                __config: {
-                    successMessage:
-                        tt('search_jsx.successfully_rewarded_the_author') + '.',
-                },
-            };
-
+        showRewardPost: (author, permlink, onSuccess) => {
             dispatch(
-                transactionActions.broadcastOperation({
-                    type: 'custom_json',
-                    operation,
-                    successCallback,
-                    errorCallback,
+                globalActions.showDialog({
+                    name: 'rewardPost',
+                    params: { author, permlink, onSuccess },
                 })
             );
         },
