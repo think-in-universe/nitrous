@@ -115,10 +115,11 @@ class PostFull extends React.Component {
             const content = this.props.cont.get(this.props.post);
             deletePost(content.get('author'), content.get('permlink'));
         };
+        this.onScroll = this.onScroll.bind(this);
     }
 
     componentWillMount() {
-        const { post } = this.props;
+        const { username, post } = this.props;
         const formId = `postFull-${post}`;
         this.setState({
             formId,
@@ -136,6 +137,17 @@ class PostFull extends React.Component {
                     this.setState({ showEdit: true });
                 }
             }
+
+            // identify whether the post is selected during search
+            const post_content = this.props.cont.get(post);
+            if (!post_content) return;
+            const author = post_content.get('author');
+            const permlink = post_content.get('permlink');
+            const selected = isPostSelected(author, permlink);
+            const showRating = username && username !== author && selected;
+            let rating = null;
+            if (showRating) rating = this.getPostRating();
+            this.setState({ showRating, rating });
         }
     }
 
@@ -249,6 +261,63 @@ class PostFull extends React.Component {
         this.props.showExplorePost(permlink, title);
     };
 
+    getPostRating() {
+        // get the link to rating comment by the user
+        const { username, post, cont } = this.props;
+        const post_content = this.props.cont.get(this.props.post);
+        if (!post_content) return;
+        const author = post_content.get('author');
+        const permlink = post_content.get('permlink');
+        const comment_permlink = `re-rating-${author}-${permlink}`;
+        // get rating score from comment
+        const rating_content = this.props.cont.get(
+            `${username}/${comment_permlink}`
+        );
+        if (!rating_content) return null;
+        const body = rating_content.get('body');
+        const m_rating = body.match(/score=\"(\d)\"/);
+        if (m_rating) return Number(m_rating[1]);
+        else return null;
+    }
+
+    showRatingReminder = () => {
+        console.log(
+            'rating bar reached',
+            this.state.showRating,
+            this.state.rating
+        );
+        if (this.state.showRating && !this.state.rating) {
+            console.log('show rating reminder');
+        }
+    };
+
+    hasReachedBottom(el) {
+        if (el) return el.getBoundingClientRect().bottom <= window.innerHeight;
+        else return false;
+    }
+
+    componentDidMount() {
+        if (this.state.showRating)
+            document.addEventListener('scroll', this.onScroll);
+    }
+
+    componentWillUnmount() {
+        if (this.state.showRating)
+            document.removeEventListener('scroll', this.onScroll);
+    }
+
+    onScroll = () => {
+        const wrappedElement = document.getElementById('post-rating-bar');
+        if (
+            this.state.showRating &&
+            wrappedElement &&
+            this.hasReachedBottom(wrappedElement)
+        ) {
+            document.removeEventListener('scroll', this.onScroll);
+            this.showRatingReminder();
+        }
+    };
+
     render() {
         const {
             props: { username, post },
@@ -258,6 +327,7 @@ class PostFull extends React.Component {
                 formId,
                 showReply,
                 showEdit,
+                showRating,
             },
             onShowReply,
             onShowEdit,
@@ -448,10 +518,6 @@ class PostFull extends React.Component {
         const showDeleteOption =
             username === author && content.stats.allowDelete && !_isPaidout;
 
-        // identify whether the post is selected during search
-        const selected = isPostSelected(author, permlink);
-        const showRating = username && username !== author && selected;
-
         const authorRepLog10 = repLog10(content.author_reputation);
         const isPreViewCount =
             Date.parse(post_content.get('created')) < 1480723200000; // check if post was created before view-count tracking began (2016-12-03)
@@ -564,7 +630,9 @@ class PostFull extends React.Component {
                         </button>
                         {showRating && (
                             <PostRating
+                                id="post-rating-bar"
                                 className="float-right"
+                                initialRating={this.state.rating}
                                 onChange={this.showRatePost}
                             />
                         )}

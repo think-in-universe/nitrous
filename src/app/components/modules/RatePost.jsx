@@ -102,9 +102,6 @@ class RatePost extends Component {
     }
 }
 
-// const AssetBalance = ({onClick, balanceValue}) =>
-//     <a onClick={onClick} style={{borderBottom: '#A09F9F 1px dotted', cursor: 'pointer'}}>Balance: {balanceValue}</a>
-
 export default connect(
     (state, ownProps) => {
         const currentUser = state.user.getIn(['current']);
@@ -126,9 +123,6 @@ export default connect(
             const username = currentUser.get('username');
 
             const successCallback = () => {
-                // dispatch(
-                //     globalActions.getState({ url: `@${username}/transfers` })
-                // );
                 onClose();
             };
 

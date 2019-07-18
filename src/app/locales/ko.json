@@ -825,7 +825,7 @@
     "reward_post_jsx": {
         "reward_post": "이 기사의 저자에게 보상하기",
         "reward_post_and_get_vote":
-            "이 기사를 계속 읽고 싶다면 지불해야합니다 %(amount)s %(DEBT_TOKEN)s 저자에게 보상하는 데 사용됩니다. 그러나이 기사를 읽고 등급을 매기고 나면 SCT 팀이 평가 및 평가에 감사하다는 메시지를 평가할 것입니다.",
+            "점수를받은 후 귀하의 평가가 포함 된 답변이 생성됩니다. 귀하의 검토에 감사 드리며 귀하의 답변은 SCT 팀에 의해 자동으로 좋아할 것입니다.",
         "confirm_reward_post":
             "지출해야 할 것입니다 %(amount)s %(DEBT_TOKEN)s 저자에게 보상하기 위해 사용됨 @%(author)s . 이 보상들 중에서, %(reward_amount)s 저자에게 지급됩니다 @%(author)s, 남은 %(burn_amount)s 파괴 될 것이다 (보내기 @null 계정)."
     },

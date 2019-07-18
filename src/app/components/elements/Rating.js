@@ -6,12 +6,14 @@ import Rating from 'react-rating';
 
 export default class PostRating extends Rating {
     static propTypes = {
+        initialRating: PropTypes.number,
         onChange: PropTypes.func,
     };
 
     constructor(props) {
         super(props);
-        this.state = { value: 0 };
+        const rating = this.props.initialRating || 0;
+        this.state = { value: rating };
         this.onChange = this.props.onChange.bind(this);
     }
 
