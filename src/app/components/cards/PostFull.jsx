@@ -29,6 +29,9 @@ import LoadingIndicator from 'app/components/elements/LoadingIndicator';
 import { GoogleAd } from 'app/components/elements/GoogleAd';
 import PostRating from 'app/components/elements/Rating';
 import ContentEditedWrapper from '../elements/ContentEditedWrapper';
+import ReactHintFactory from 'react-hint';
+const ReactHint = ReactHintFactory(React);
+import 'react-hint/css/index.css';
 
 function TimeAuthorCategory({ content, authorRepLog10, showTags }) {
     return (
@@ -116,6 +119,7 @@ class PostFull extends React.Component {
             deletePost(content.get('author'), content.get('permlink'));
         };
         this.onScroll = this.onScroll.bind(this);
+        this.hideRatingReminder = this.hideRatingReminder.bind(this);
     }
 
     componentWillMount() {
@@ -265,6 +269,7 @@ class PostFull extends React.Component {
         // get the link to rating comment by the user
         const { username, post, cont } = this.props;
         const post_content = this.props.cont.get(this.props.post);
+        console.log('post_content', post_content);
         if (!post_content) return;
         const author = post_content.get('author');
         const permlink = post_content.get('permlink');
@@ -273,6 +278,7 @@ class PostFull extends React.Component {
         const rating_content = this.props.cont.get(
             `${username}/${comment_permlink}`
         );
+        console.log('rating_content', rating_content);
         if (!rating_content) return null;
         const body = rating_content.get('body');
         const m_rating = body.match(/score=\"(\d)\"/);
@@ -280,14 +286,20 @@ class PostFull extends React.Component {
         else return null;
     }
 
-    showRatingReminder = () => {
+    showRatingReminder = target => {
         console.log(
             'rating bar reached',
             this.state.showRating,
             this.state.rating
         );
         if (this.state.showRating && !this.state.rating) {
-            console.log('show rating reminder');
+            this.tooltip.toggleHint({ target });
+        }
+    };
+
+    hideRatingReminder = () => {
+        if (this.state.showRating && this.tooltip) {
+            this.tooltip.setState({ target: null });
         }
     };
 
@@ -314,7 +326,7 @@ class PostFull extends React.Component {
             this.hasReachedBottom(wrappedElement)
         ) {
             document.removeEventListener('scroll', this.onScroll);
-            this.showRatingReminder();
+            this.showRatingReminder(wrappedElement);
         }
     };
 
@@ -629,12 +641,29 @@ class PostFull extends React.Component {
                             <Icon name="link" className="chain-right" />
                         </button>
                         {showRating && (
-                            <PostRating
-                                id="post-rating-bar"
-                                className="float-right"
-                                initialRating={this.state.rating}
-                                onChange={this.showRatePost}
-                            />
+                            <span>
+                                <ReactHint
+                                    autoPosition
+                                    events={false}
+                                    persist
+                                    ref={ref => {
+                                        this.tooltip = ref;
+                                    }}
+                                />
+                                <span
+                                    data-rh={tt(
+                                        'rate_post_jsx.rating_reminder'
+                                    )}
+                                >
+                                    <PostRating
+                                        id="post-rating-bar"
+                                        class="float-right"
+                                        initialRating={this.state.rating}
+                                        onChange={this.showRatePost}
+                                        onClick={this.hideRatingReminder}
+                                    />
+                                </span>
+                            </span>
                         )}
                     </div>
                 </div>

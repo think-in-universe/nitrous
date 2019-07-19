@@ -7632,6 +7632,11 @@ react-highcharts@8.4.2:
   dependencies:
     highcharts "^4.2.3"
 
+react-hint@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.npm.taobao.org/react-hint/download/react-hint-3.2.0.tgz#ca805a18330f03fb71bb7a96a34931598899e67d"
+  integrity sha1-yoBaGDMPA/txu3qWo0kxWYiZ5n0=
+
 react-html-attributes@^1.3.0:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/react-html-attributes/-/react-html-attributes-1.4.1.tgz#97b5ec710da68833598c8be6f89ac436216840a5"
