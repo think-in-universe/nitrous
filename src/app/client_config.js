@@ -50,7 +50,7 @@ export const PRIVACY_POLICY_URL = 'https://' + APP_DOMAIN + '/privacy.html';
 export const WHITEPAPER_URL = 'https://steem.io/SteemWhitePaper.pdf';
 
 // search feature configurations
-export const GOOGLE_CUSTOM_SEARCH_ID = '002054531452547600153:c65zk0qbyd4';
+export const GOOGLE_CUSTOM_SEARCH_ID = '007300013170064212310:6xze6cdavke';
 export const SEARCH_SELECTION_REWARD_AMOUNT = 0.002;
 export const SEARCH_SELECTION_BURN_AMOUNT = 0.001;
 
