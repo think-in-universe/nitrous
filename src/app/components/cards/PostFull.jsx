@@ -31,7 +31,6 @@ import PostRating from 'app/components/elements/Rating';
 import ContentEditedWrapper from '../elements/ContentEditedWrapper';
 import ReactHintFactory from 'react-hint';
 const ReactHint = ReactHintFactory(React);
-import 'react-hint/css/index.css';
 
 function TimeAuthorCategory({ content, authorRepLog10, showTags }) {
     return (
