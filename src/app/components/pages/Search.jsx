@@ -285,26 +285,26 @@ class PaidSearch extends React.Component {
                 });
 
                 // add preview and click for title only
-                if (e.parentNode.getAttribute('class') === 'gs-title') {
-                    // show hint after adding data-search argument
-                    e.setAttribute('data-search', '');
-                    e.addEventListener('click', event => {
-                        let href = e.getAttribute('href');
-                        if (
-                            typeof href === typeof undefined ||
-                            href === null ||
-                            href === false
-                        ) {
-                            this.showRewardPost(e);
-                        }
-                    });
+                // if (e.parentNode.getAttribute('class') === 'gs-title') {
+                // show hint after adding data-search argument
+                e.setAttribute('data-search', '');
+                e.addEventListener('click', event => {
+                    let href = e.getAttribute('href');
+                    if (
+                        typeof href === typeof undefined ||
+                        href === null ||
+                        href === false
+                    ) {
+                        this.showRewardPost(e);
+                    }
+                });
 
-                    // set initial loading state
-                    const { key } = res;
-                    let state = {};
-                    state[`loading_${key}`] = true;
-                    this.setState(state);
-                }
+                // set initial loading state
+                const { key } = res;
+                let state = {};
+                state[`loading_${key}`] = true;
+                this.setState(state);
+                // }
             }
         }
     }
