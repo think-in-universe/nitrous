@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import * as globalActions from 'app/redux/GlobalReducer';
 import LoadingIndicator from 'app/components/elements/LoadingIndicator';
 import { GOOGLE_CUSTOM_SEARCH_ID } from 'app/client_config';
-// import MarkdownViewer from 'app/components/cards/MarkdownViewer';
+import MarkdownViewer from 'app/components/cards/MarkdownViewer';
 import { isLoggedIn } from 'app/utils/UserUtil';
 import { api } from '@steemit/steem-js';
 import ReactHintFactory from 'react-hint';
@@ -124,7 +124,7 @@ class PaidSearch extends React.Component {
             'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js',
             callback
         );
-        loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
+        // loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
     }
 
     parsePost(element, attribute) {
@@ -185,28 +185,26 @@ class PaidSearch extends React.Component {
     renderMarkdown(md) {
         // remove image tag
         // md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
-        let h = marked(md);
-        h = $('<p>')
-            .html(h)
-            .find('img')
-            .remove()
-            .end()
-            .html();
-        return h;
+        // let h = marked(md);
+        // h = $('<p>')
+        //     .html(h)
+        //     .find('img')
+        //     .remove()
+        //     .end()
+        //     .html();
+        // return <div dangerouslySetInnerHTML={{__html: h }} />
 
-        // res.append('<div class="box" />');
-        // ReactDOM.render(
-        //     <MarkdownViewer
-        //         formId={"search-preview" + '-viewer'}
-        //         text={md}
-        //         jsonMetadata={{}}
-        //         large
-        //         highQualityPost={false}
-        //         noImage={true}
-        //         hideImages={true}
-        //     />,
-        //     res.children('div.box')[0]
-        // );
+        return (
+            <MarkdownViewer
+                formId={'search-preview' + '-viewer'}
+                text={md}
+                jsonMetadata={{}}
+                large={false}
+                highQualityPost={false}
+                noImage={true}
+                hideImages={true}
+            />
+        );
     }
 
     onRenderPreview(target, content) {
@@ -231,11 +229,7 @@ class PaidSearch extends React.Component {
                             <br />
                         </span>
                     )}
-                    <div
-                        dangerouslySetInnerHTML={{
-                            __html: this.state[`preview_${key}`],
-                        }}
-                    />
+                    {this.state[`preview_${key}`]}
                 </div>
             );
         }
