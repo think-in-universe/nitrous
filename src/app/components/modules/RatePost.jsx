@@ -5,7 +5,12 @@ import ReactDOM from 'react-dom';
 import * as transactionActions from 'app/redux/TransactionReducer';
 import * as globalActions from 'app/redux/GlobalReducer';
 import LoadingIndicator from 'app/components/elements/LoadingIndicator';
-import { LIQUID_TOKEN_UPPERCASE, APP_NAME, SCOT_TAG } from 'app/client_config';
+import {
+    LIQUID_TOKEN_UPPERCASE,
+    APP_NAME,
+    SCOT_TAG,
+    SEARCH_SELECTION_REWARD_AMOUNT,
+} from 'app/client_config';
 import tt from 'counterpart';
 import { Set } from 'immutable';
 
@@ -154,7 +159,6 @@ export default connect(
                 });
             };
 
-            // const originalBody = body;
             const __config = {};
 
             const operation = {
@@ -164,7 +168,12 @@ export default connect(
                 permlink: `re-rating-${author}-${permlink}`, // only one
                 category: category,
                 title: '',
-                body: rate_template(username, author, rating, 0.7),
+                body: rate_template(
+                    username,
+                    author,
+                    rating,
+                    SEARCH_SELECTION_REWARD_AMOUNT
+                ),
                 json_metadata: get_metadata(),
                 __config,
             };
