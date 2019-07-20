@@ -2,42 +2,47 @@ import React from 'react';
 import tt from 'counterpart';
 import { connect } from 'react-redux';
 // import ReactDOM from 'react-dom';
-import * as transactionActions from 'app/redux/TransactionReducer';
 import * as globalActions from 'app/redux/GlobalReducer';
 import LoadingIndicator from 'app/components/elements/LoadingIndicator';
-import {
-    APP_NAME,
-    LIQUID_TOKEN_UPPERCASE,
-    PROMOTED_POST_ACCOUNT,
-    GOOGLE_CUSTOM_SEARCH_ID,
-    SEARCH_SELECTION_REWARD_AMOUNT,
-    SEARCH_SELECTION_BURN_AMOUNT,
-} from 'app/client_config';
+import { GOOGLE_CUSTOM_SEARCH_ID } from 'app/client_config';
 // import MarkdownViewer from 'app/components/cards/MarkdownViewer';
 import { isLoggedIn } from 'app/utils/UserUtil';
 import { api } from '@steemit/steem-js';
+import ReactHintFactory from 'react-hint';
+const ReactHint = ReactHintFactory(React);
 
 class PaidSearch extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            amount: '1.0',
-            asset: '',
             loading: false,
-            amountError: '',
-            trxError: '',
+            preview: null,
         };
         this.errorCallback = this.errorCallback.bind(this);
         this.addPreviews = this.addPreviews.bind(this);
+        this.onRenderPreview = this.onRenderPreview.bind(this);
     }
 
     render() {
         const { loading } = this.state;
+        // className="preview"
 
         if (isLoggedIn()) {
             return (
                 <div className="Search">
                     <div className="row medium-8 large-7 search-content">
+                        <ReactHint
+                            autoPosition
+                            events
+                            delay={{ show: 100, hide: 500 }}
+                        />
+                        <ReactHint
+                            persist
+                            attribute="data-search"
+                            events={{ hover: true }}
+                            onRenderContent={this.onRenderPreview}
+                            ref={ref => (this.instance = ref)}
+                        />
                         <div className="columns">
                             {loading && (
                                 <span>
@@ -45,7 +50,6 @@ class PaidSearch extends React.Component {
                                     <br />
                                 </span>
                             )}
-                            <br />
                             {/* <gcse:search linktarget="_self"></gcse:search> */}
                             <div
                                 id="search_renderer"
@@ -183,7 +187,59 @@ class PaidSearch extends React.Component {
     }
 
     errorCallback(estr) {
-        this.setState({ trxError: estr, loading: false });
+        this.setState({ loading: false });
+    }
+
+    renderMarkdown(md) {
+        // remove image tag
+        // md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
+        let h = marked(md);
+        h = $('<p>')
+            .html(h)
+            .find('img')
+            .remove()
+            .end()
+            .html();
+        return h;
+
+        // res.append('<div class="box" />');
+        // ReactDOM.render(
+        //     <MarkdownViewer
+        //         formId={"search-preview" + '-viewer'}
+        //         text={md}
+        //         jsonMetadata={{}}
+        //         large
+        //         highQualityPost={false}
+        //         noImage={true}
+        //         hideImages={true}
+        //     />,
+        //     res.children('div.box')[0]
+        // );
+    }
+
+    onRenderPreview(target, content) {
+        console.log('render preview', target, content);
+
+        // render the preview with steem API
+        const res = this.parsePost(target, 'gs-url');
+        if (res) {
+            const { author, permlink } = res;
+            console.log('post', author, permlink);
+            api.getContent(author, permlink, (err, result) => {
+                if (result && result.body) {
+                    this.setState({
+                        preview: this.renderMarkdown(result.body),
+                    });
+                }
+            });
+        }
+
+        return (
+            <div
+                className="preview"
+                dangerouslySetInnerHTML={{ __html: this.state.preview }}
+            />
+        );
     }
 
     addPreviews() {
@@ -192,43 +248,8 @@ class PaidSearch extends React.Component {
 
         // steem.api.setOptions({ url: 'https://steemd.minnowsupportproject.org' });
 
-        function render_preview(element) {
-            // render the preview with steem.js
-            const res = page.parsePost(element, 'gs-url');
-            if (res) {
-                const { author, permlink } = res;
-                api.getContent(author, permlink, function(err, result) {
-                    if (result && result.body) {
-                        append_preview_element(element, result.body);
-                    }
-                });
-            }
-        }
-
-        function clean_markdown(md) {
-            // remove image tag
-            // md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
-            let h = marked(md);
-            h = $('<p>')
-                .html(h)
-                .find('img')
-                .remove()
-                .end()
-                .html();
-            return h;
-        }
-
-        function get_preview_element(e) {
-            var res = $(e)
-                .parent()
-                .parent()
-                .parent();
-            return res.children('div.preview');
-        }
-
         function add_event_listeners(e) {
-            var events = $._data(e, 'events');
-            if (!events || !events.mouseover || events.mouseover.length == 0) {
+            if (!e.hasAttribute('data-search')) {
                 const res = page.parsePost(e, 'href');
                 if (res) {
                     // update attribute
@@ -236,14 +257,9 @@ class PaidSearch extends React.Component {
                         .attr('gs-url', $(e).attr('href'))
                         .removeAttr('href');
 
+                    $(e).attr('data-search', '');
+
                     $(e)
-                        .on('mouseover', function() {
-                            render_preview(this);
-                            get_preview_element(e).show();
-                        })
-                        .on('mouseout', function() {
-                            get_preview_element(e).hide();
-                        })
                         .on('click', function(event) {
                             // event.preventDefault();
                             let href = $(e).attr('href');
@@ -270,37 +286,8 @@ class PaidSearch extends React.Component {
             }
         }
 
-        function append_preview_element(e, md) {
-            var res = $(e)
-                .parent()
-                .parent()
-                .parent();
-            if (res.children('div.preview').length == 0) {
-                res.append(
-                    '<div class="preview">' + clean_markdown(md) + '</div>'
-                );
-
-                // res.append('<div class="box" />');
-                // ReactDOM.render(
-                //     <MarkdownViewer
-                //         formId={"search-preview" + '-viewer'}
-                //         text={md}
-                //         jsonMetadata={{}}
-                //         large
-                //         highQualityPost={false}
-                //         noImage={true}
-                //         hideImages={true}
-                //     />,
-                //     res.children('div.box')[0]
-                // );
-            }
-        }
-
-        function attach_preview_listeners() {
-            // 1. find the search results elements
+        function modify_search_result_listeners() {
             var elements = $(search_res_titles);
-
-            // 2. add the preview and pay function
             if (elements && elements.length > 0) {
                 for (var i = 0; i < elements.length; i++) {
                     var e = elements[i];
@@ -321,13 +308,11 @@ class PaidSearch extends React.Component {
         function add_previews() {
             add_dom_render_observer(
                 search_res_titles,
-                attach_preview_listeners
+                modify_search_result_listeners
             );
         }
 
-        // $(document).ready(function(){
         add_previews();
-        // });
     }
 
     componentDidMount() {

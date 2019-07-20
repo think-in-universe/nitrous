@@ -95,19 +95,16 @@
     }
 
     .preview{
-        display: none;
-        width: 100%;
-    }
-    div.gsc-result:hover .preview,.preview:hover{
         display: block;
         position: relative;
         z-index: 100;
         width: 100%;
         max-height: 256px;
+        min-width: 512px;
         margin: 10px auto;
         padding: 10px;
-        background: #fdfdff;
-        border-radius: 5px;
+        background: #fefefe;
+        border-radius: 3px;
         border: 3px solid #76A4FC;
         transition: all 5s ease-in-out;
         overflow: hidden;
