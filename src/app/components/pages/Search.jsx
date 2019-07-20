@@ -29,7 +29,7 @@ class PaidSearch extends React.Component {
                         <ReactHint
                             autoPosition
                             events
-                            delay={{ show: 100, hide: 500 }}
+                            delay={{ show: 300, hide: 500 }}
                         />
                         <ReactHint
                             persist
