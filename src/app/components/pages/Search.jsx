@@ -14,19 +14,13 @@ const ReactHint = ReactHintFactory(React);
 class PaidSearch extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            loading: false,
-            preview: null,
-        };
-        this.errorCallback = this.errorCallback.bind(this);
+        this.state = {};
         this.addPreviews = this.addPreviews.bind(this);
         this.onRenderPreview = this.onRenderPreview.bind(this);
+        this.modifySearchResult = this.modifySearchResult.bind(this);
     }
 
     render() {
-        const { loading } = this.state;
-        // className="preview"
-
         if (isLoggedIn()) {
             return (
                 <div className="Search">
@@ -44,12 +38,6 @@ class PaidSearch extends React.Component {
                             ref={ref => (this.instance = ref)}
                         />
                         <div className="columns">
-                            {loading && (
-                                <span>
-                                    <LoadingIndicator type="circle" />
-                                    <br />
-                                </span>
-                            )}
                             {/* <gcse:search linktarget="_self"></gcse:search> */}
                             <div
                                 id="search_renderer"
@@ -162,6 +150,7 @@ class PaidSearch extends React.Component {
                 return {
                     author,
                     permlink,
+                    key: author + '/' + permlink,
                 };
             }
             return null;
@@ -177,17 +166,12 @@ class PaidSearch extends React.Component {
             const openPage = () => {
                 // save the selected status in local storage
                 localStorage.setItem(`selected-@${author}/${permlink}`, 'true');
-                this.setState({ loading: false });
                 $(element).attr('href', $(element).attr('gs-url'));
                 element.click();
             };
 
             this.props.showRewardPost(author, permlink, openPage);
         }
-    }
-
-    errorCallback(estr) {
-        this.setState({ loading: false });
     }
 
     renderMarkdown(md) {
@@ -218,101 +202,109 @@ class PaidSearch extends React.Component {
     }
 
     onRenderPreview(target, content) {
-        console.log('render preview', target, content);
-
         // render the preview with steem API
         const res = this.parsePost(target, 'gs-url');
         if (res) {
-            const { author, permlink } = res;
-            console.log('post', author, permlink);
+            const { author, permlink, key } = res;
             api.getContent(author, permlink, (err, result) => {
                 if (result && result.body) {
-                    this.setState({
-                        preview: this.renderMarkdown(result.body),
-                    });
+                    let state = {};
+                    state[`loading_${key}`] = false;
+                    state[`preview_${key}`] = this.renderMarkdown(result.body);
+                    this.setState(state);
                 }
             });
+
+            return (
+                <div className="preview">
+                    {this.state[`loading_${key}`] && (
+                        <span>
+                            <LoadingIndicator type="circle" />
+                            <br />
+                        </span>
+                    )}
+                    <div
+                        dangerouslySetInnerHTML={{
+                            __html: this.state[`preview_${key}`],
+                        }}
+                    />
+                </div>
+            );
         }
 
-        return (
-            <div
-                className="preview"
-                dangerouslySetInnerHTML={{ __html: this.state.preview }}
-            />
-        );
+        return null;
     }
 
     addPreviews() {
-        const page = this;
         const search_res_titles = 'div.gs-webResult.gs-result a[data-cturl]';
 
-        // steem.api.setOptions({ url: 'https://steemd.minnowsupportproject.org' });
-
-        function add_event_listeners(e) {
-            if (!e.hasAttribute('data-search')) {
-                const res = page.parsePost(e, 'href');
-                if (res) {
-                    // update attribute
-                    $(e)
-                        .attr('gs-url', $(e).attr('href'))
-                        .removeAttr('href');
-
-                    $(e).attr('data-search', '');
-
-                    $(e)
-                        .on('click', function(event) {
-                            // event.preventDefault();
-                            let href = $(e).attr('href');
-                            if (
-                                typeof href === typeof undefined ||
-                                href === false
-                            ) {
-                                page.showRewardPost(e);
-                            }
-                            // else {
-                            //     let win = window.open();
-                            //     win.location = href;
-                            //     win.opener = null;
-                            //     win.blur();
-                            //     window.focus();
-                            //     // window.open(href, '_blank');
-                            // }
-                        })
-                        .on('mousedown', function(event) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                        });
-                }
-            }
-        }
-
-        function modify_search_result_listeners() {
+        const modify_search_result_listeners = () => {
             var elements = $(search_res_titles);
             if (elements && elements.length > 0) {
                 for (var i = 0; i < elements.length; i++) {
                     var e = elements[i];
-                    add_event_listeners(e);
+                    this.modifySearchResult(e);
                 }
             }
-        }
+        };
 
-        function add_dom_render_observer(selector, func) {
+        const add_dom_render_observer = (selector, func) => {
             var i = setInterval(function() {
                 if ($(selector).length != 0) {
                     func();
                     // clearInterval(i);
                 }
             }, 100);
-        }
+        };
 
-        function add_previews() {
-            add_dom_render_observer(
-                search_res_titles,
-                modify_search_result_listeners
-            );
-        }
+        add_dom_render_observer(
+            search_res_titles,
+            modify_search_result_listeners
+        );
+    }
 
-        add_previews();
+    modifySearchResult(e) {
+        if (!e.hasAttribute('data-search')) {
+            const res = this.parsePost(e, 'href');
+            if (res) {
+                // update attribute
+                $(e)
+                    .attr('gs-url', $(e).attr('href'))
+                    .removeAttr('href');
+
+                $(e).attr('data-search', '');
+
+                $(e)
+                    .on('click', function(event) {
+                        // event.preventDefault();
+                        let href = $(e).attr('href');
+                        if (
+                            typeof href === typeof undefined ||
+                            href === false
+                        ) {
+                            this.showRewardPost(e);
+                        }
+                        // else {
+                        //     let win = window.open();
+                        //     win.location = href;
+                        //     win.opener = null;
+                        //     win.blur();
+                        //     window.focus();
+                        //     // window.open(href, '_blank');
+                        // }
+                    })
+                    .on('mousedown', function(event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    });
+
+                // set initial loading state
+                const { key } = res;
+                let state = {};
+                state[`loading_${key}`] = true;
+                this.setState(state);
+            }
+        }
     }
 
     componentDidMount() {
