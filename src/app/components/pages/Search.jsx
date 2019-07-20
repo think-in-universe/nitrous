@@ -168,6 +168,14 @@ class PaidSearch extends React.Component {
                 localStorage.setItem(`selected-@${author}/${permlink}`, 'true');
                 $(element).attr('href', $(element).attr('gs-url'));
                 element.click();
+
+                //     let win = window.open();
+                //     win.location = href;
+                //     win.opener = null;
+                //     win.blur();
+                //     window.focus();
+                //     // window.open(href, '_blank');
+                // }
             };
 
             this.props.showRewardPost(author, permlink, openPage);
@@ -264,45 +272,46 @@ class PaidSearch extends React.Component {
     }
 
     modifySearchResult(e) {
-        if (!e.hasAttribute('data-search')) {
+        const page = this;
+        if (!e.hasAttribute('gs-url-disabled')) {
             const res = this.parsePost(e, 'href');
             if (res) {
-                // update attribute
+                // add the mark that the element is processed
+                $(e).attr('gs-url-disabled', '');
+                // update gs-url attribute
                 $(e)
                     .attr('gs-url', $(e).attr('href'))
                     .removeAttr('href');
+                // remove default click
+                $(e).on('mousedown', function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
 
-                $(e).attr('data-search', '');
-
-                $(e)
-                    .on('click', function(event) {
+                // add preview and click for title only
+                if (
+                    $(e)
+                        .parent()
+                        .attr('class') === 'gs-title'
+                ) {
+                    $(e).attr('data-search', '');
+                    $(e).on('click', function(event) {
                         // event.preventDefault();
                         let href = $(e).attr('href');
                         if (
                             typeof href === typeof undefined ||
                             href === false
                         ) {
-                            this.showRewardPost(e);
+                            page.showRewardPost(e);
                         }
-                        // else {
-                        //     let win = window.open();
-                        //     win.location = href;
-                        //     win.opener = null;
-                        //     win.blur();
-                        //     window.focus();
-                        //     // window.open(href, '_blank');
-                        // }
-                    })
-                    .on('mousedown', function(event) {
-                        event.preventDefault();
-                        event.stopPropagation();
                     });
 
-                // set initial loading state
-                const { key } = res;
-                let state = {};
-                state[`loading_${key}`] = true;
-                this.setState(state);
+                    // set initial loading state
+                    const { key } = res;
+                    let state = {};
+                    state[`loading_${key}`] = true;
+                    this.setState(state);
+                }
             }
         }
     }
@@ -317,7 +326,7 @@ class PaidSearch extends React.Component {
 
 const Search = connect(
     (state, ownProps) => {
-        const currentUser = state.user.get('current'); // state.user.getIn(['current']);
+        const currentUser = state.user.get('current');
         return { ...ownProps, currentUser };
     },
 
