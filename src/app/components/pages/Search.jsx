@@ -75,7 +75,7 @@ class PaidSearch extends React.Component {
                 gname: 'custom_search',
             });
         };
-        const myCallback = () => {
+        const reanderSearch = () => {
             if (document.readyState == 'complete') {
                 // Document is ready when CSE element is initialized.
                 renderer();
@@ -90,7 +90,13 @@ class PaidSearch extends React.Component {
         // parameters, like parsetags, callbacks.
         window.__gcse = {
             parsetags: 'explicit', // 'onload', //
-            callback: myCallback,
+            callback: reanderSearch,
+        };
+        window.__gcse.searchCallbacks = {
+            web: {
+                // ready: this.watchSearchResults,
+                rendered: this.watchSearchResults,
+            },
         };
     }
 
@@ -240,8 +246,9 @@ class PaidSearch extends React.Component {
 
     watchSearchResults() {
         const search_res_titles = 'div.gs-webResult.gs-result a[data-cturl]';
+        const search_res_urls = 'div.gs-visibleUrl.gs-visibleUrl-long';
 
-        const modify_search_result_listeners = elements => {
+        const modify_search_results = elements => {
             if (elements && elements.length > 0) {
                 for (var i = 0; i < elements.length; i++) {
                     var e = elements[i];
@@ -250,20 +257,34 @@ class PaidSearch extends React.Component {
             }
         };
 
+        const hide_search_urls = elements => {
+            if (elements && elements.length > 0) {
+                for (var i = 0; i < elements.length; i++) {
+                    var e = elements[i];
+                    e.parentNode.removeChild(e);
+                }
+            }
+        };
+
+        const update = (selector, func) => {
+            var elements = document.querySelectorAll(selector);
+            if (elements.length != 0) {
+                func(elements);
+            }
+        };
+
         const add_dom_render_observer = (selector, func) => {
             var i = setInterval(function() {
-                var elements = document.querySelectorAll(selector);
-                if (elements.length != 0) {
-                    func(elements);
-                    // clearInterval(i);
-                }
+                update(selector, func);
+                // clearInterval(i);
             }, 100);
         };
 
-        add_dom_render_observer(
-            search_res_titles,
-            modify_search_result_listeners
-        );
+        const execute = update; // add_dom_render_observer
+
+        execute(search_res_titles, modify_search_results);
+
+        execute(search_res_urls, hide_search_urls);
     }
 
     modifySearchResult(e) {
@@ -313,7 +334,7 @@ class PaidSearch extends React.Component {
         this.insertCSE();
         this.renderCSE();
         // this.loadScripts(this.watchSearchResults);
-        this.watchSearchResults();
+        // this.watchSearchResults();
     }
 }
 
