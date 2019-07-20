@@ -276,6 +276,8 @@ class PaidSearch extends React.Component {
                 // update gs-url attribute
                 e.setAttribute('gs-url', e.getAttribute('href'));
                 e.removeAttribute('href');
+                // remove the default google custom search url
+                e.removeAttribute('data-cturl');
                 // remove default click
                 e.addEventListener('mousedown', event => {
                     event.preventDefault();
