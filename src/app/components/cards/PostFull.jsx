@@ -653,6 +653,7 @@ class PostFull extends React.Component {
                                     data-rh={tt(
                                         'rate_post_jsx.rating_reminder'
                                     )}
+                                    data-rh-at="left"
                                 >
                                     <PostRating
                                         id="post-rating-bar"
