@@ -29,6 +29,8 @@ import LoadingIndicator from 'app/components/elements/LoadingIndicator';
 import { GoogleAd } from 'app/components/elements/GoogleAd';
 import PostRating from 'app/components/elements/Rating';
 import ContentEditedWrapper from '../elements/ContentEditedWrapper';
+import ReactHintFactory from 'react-hint';
+const ReactHint = ReactHintFactory(React);
 
 function TimeAuthorCategory({ content, authorRepLog10, showTags }) {
     return (
@@ -115,10 +117,12 @@ class PostFull extends React.Component {
             const content = this.props.cont.get(this.props.post);
             deletePost(content.get('author'), content.get('permlink'));
         };
+        this.onScroll = this.onScroll.bind(this);
+        this.hideRatingReminder = this.hideRatingReminder.bind(this);
     }
 
     componentWillMount() {
-        const { post } = this.props;
+        const { username, post } = this.props;
         const formId = `postFull-${post}`;
         this.setState({
             formId,
@@ -136,6 +140,17 @@ class PostFull extends React.Component {
                     this.setState({ showEdit: true });
                 }
             }
+
+            // identify whether the post is selected during search
+            const post_content = this.props.cont.get(post);
+            if (!post_content) return;
+            const author = post_content.get('author');
+            const permlink = post_content.get('permlink');
+            const selected = isPostSelected(author, permlink);
+            const showRating = username && username !== author && selected;
+            let rating = null;
+            if (showRating) rating = this.getPostRating();
+            this.setState({ showRating, rating });
         }
     }
 
@@ -249,6 +264,71 @@ class PostFull extends React.Component {
         this.props.showExplorePost(permlink, title);
     };
 
+    getPostRating() {
+        // get the link to rating comment by the user
+        const { username, post, cont } = this.props;
+        const post_content = this.props.cont.get(this.props.post);
+        console.log('post_content', post_content);
+        if (!post_content) return;
+        const author = post_content.get('author');
+        const permlink = post_content.get('permlink');
+        const comment_permlink = `re-rating-${author}-${permlink}`;
+        // get rating score from comment
+        const rating_content = this.props.cont.get(
+            `${username}/${comment_permlink}`
+        );
+        console.log('rating_content', rating_content);
+        if (!rating_content) return null;
+        const body = rating_content.get('body');
+        const m_rating = body.match(/score=\"(\d)\"/);
+        if (m_rating) return Number(m_rating[1]);
+        else return null;
+    }
+
+    showRatingReminder = target => {
+        console.log(
+            'rating bar reached',
+            this.state.showRating,
+            this.state.rating
+        );
+        if (this.state.showRating && !this.state.rating) {
+            this.tooltip.toggleHint({ target });
+        }
+    };
+
+    hideRatingReminder = () => {
+        if (this.state.showRating && this.tooltip) {
+            this.tooltip.setState({ target: null });
+        }
+    };
+
+    hasReachedBottom(el) {
+        if (el) return el.getBoundingClientRect().bottom <= window.innerHeight;
+        else return false;
+    }
+
+    componentDidMount() {
+        if (this.state.showRating)
+            document.addEventListener('scroll', this.onScroll);
+    }
+
+    componentWillUnmount() {
+        if (this.state.showRating)
+            document.removeEventListener('scroll', this.onScroll);
+    }
+
+    onScroll = () => {
+        const wrappedElement = document.getElementById('post-rating-bar');
+        if (
+            this.state.showRating &&
+            wrappedElement &&
+            this.hasReachedBottom(wrappedElement)
+        ) {
+            document.removeEventListener('scroll', this.onScroll);
+            this.showRatingReminder(wrappedElement);
+        }
+    };
+
     render() {
         const {
             props: { username, post },
@@ -258,6 +338,7 @@ class PostFull extends React.Component {
                 formId,
                 showReply,
                 showEdit,
+                showRating,
             },
             onShowReply,
             onShowEdit,
@@ -448,10 +529,6 @@ class PostFull extends React.Component {
         const showDeleteOption =
             username === author && content.stats.allowDelete && !_isPaidout;
 
-        // identify whether the post is selected during search
-        const selected = isPostSelected(author, permlink);
-        const showRating = username && username !== author && selected;
-
         const authorRepLog10 = repLog10(content.author_reputation);
         const isPreViewCount =
             Date.parse(post_content.get('created')) < 1480723200000; // check if post was created before view-count tracking began (2016-12-03)
@@ -563,10 +640,29 @@ class PostFull extends React.Component {
                             <Icon name="link" className="chain-right" />
                         </button>
                         {showRating && (
-                            <PostRating
-                                className="float-right"
-                                onChange={this.showRatePost}
-                            />
+                            <span>
+                                <ReactHint
+                                    autoPosition
+                                    events={false}
+                                    persist
+                                    ref={ref => {
+                                        this.tooltip = ref;
+                                    }}
+                                />
+                                <span
+                                    data-rh={tt(
+                                        'rate_post_jsx.rating_reminder'
+                                    )}
+                                >
+                                    <PostRating
+                                        id="post-rating-bar"
+                                        class="float-right"
+                                        initialRating={this.state.rating}
+                                        onChange={this.showRatePost}
+                                        onClick={this.hideRatingReminder}
+                                    />
+                                </span>
+                            </span>
                         )}
                     </div>
                 </div>

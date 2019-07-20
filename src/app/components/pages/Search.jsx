@@ -2,51 +2,43 @@ import React from 'react';
 import tt from 'counterpart';
 import { connect } from 'react-redux';
 // import ReactDOM from 'react-dom';
-import * as transactionActions from 'app/redux/TransactionReducer';
 import * as globalActions from 'app/redux/GlobalReducer';
 import LoadingIndicator from 'app/components/elements/LoadingIndicator';
-import {
-    APP_NAME,
-    LIQUID_TOKEN_UPPERCASE,
-    PROMOTED_POST_ACCOUNT,
-    GOOGLE_CUSTOM_SEARCH_ID,
-    SEARCH_SELECTION_REWARD_AMOUNT,
-    SEARCH_SELECTION_BURN_AMOUNT,
-} from 'app/client_config';
-// import MarkdownViewer from 'app/components/cards/MarkdownViewer';
+import { GOOGLE_CUSTOM_SEARCH_ID } from 'app/client_config';
+import MarkdownViewer from 'app/components/cards/MarkdownViewer';
 import { isLoggedIn } from 'app/utils/UserUtil';
 import { api } from '@steemit/steem-js';
+import ReactHintFactory from 'react-hint';
+const ReactHint = ReactHintFactory(React);
 
 class PaidSearch extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            amount: '1.0',
-            asset: '',
-            loading: false,
-            amountError: '',
-            trxError: '',
-        };
-        this.onSubmit = this.onSubmit.bind(this);
-        this.errorCallback = this.errorCallback.bind(this);
-        this.addPreviews = this.addPreviews.bind(this);
+        this.state = {};
+
+        this.watchSearchResults = this.watchSearchResults.bind(this);
+        this.modifySearchResult = this.modifySearchResult.bind(this);
+        this.onRenderPreview = this.onRenderPreview.bind(this);
     }
 
     render() {
-        const { loading } = this.state;
-
         if (isLoggedIn()) {
             return (
                 <div className="Search">
                     <div className="row medium-8 large-7 search-content">
+                        <ReactHint
+                            autoPosition
+                            events
+                            delay={{ show: 300, hide: 500 }}
+                        />
+                        <ReactHint
+                            persist
+                            attribute="data-search"
+                            events={{ hover: true }}
+                            onRenderContent={this.onRenderPreview}
+                            ref={ref => (this.instance = ref)}
+                        />
                         <div className="columns">
-                            {loading && (
-                                <span>
-                                    <LoadingIndicator type="circle" />
-                                    <br />
-                                </span>
-                            )}
-                            <br />
                             {/* <gcse:search linktarget="_self"></gcse:search> */}
                             <div
                                 id="search_renderer"
@@ -129,11 +121,11 @@ class PaidSearch extends React.Component {
             document.getElementsByTagName('head')[0].appendChild(script);
         }
 
-        loadScript(
-            'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js',
-            callback
-        );
-        loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
+        // loadScript(
+        //     'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js',
+        //     callback
+        // );
+        // loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
     }
 
     parsePost(element, attribute) {
@@ -159,6 +151,7 @@ class PaidSearch extends React.Component {
                 return {
                     author,
                     permlink,
+                    key: author + '/' + permlink,
                 };
             }
             return null;
@@ -166,273 +159,177 @@ class PaidSearch extends React.Component {
         return null;
     }
 
-    onSubmit(element) {
+    showRewardPost(element) {
         const res = this.parsePost(element, 'gs-url');
         if (res) {
             const { author, permlink } = res;
-            this.setState({ loading: true });
 
             const openPage = () => {
                 // save the selected status in local storage
                 localStorage.setItem(`selected-@${author}/${permlink}`, 'true');
-                this.setState({ loading: false });
-                $(element).attr('href', $(element).attr('gs-url'));
+                element.setAttribute('href', element.getAttribute('gs-url'));
                 element.click();
+
+                //     let win = window.open();
+                //     win.location = href;
+                //     win.opener = null;
+                //     win.blur();
+                //     window.focus();
+                //     // window.open(href, '_blank');
+                // }
             };
 
-            const onRewardSuccess = () => {
-                openPage();
-            };
-
-            // const waitForSuccess = setInterval(() => {
-            //     if (success) {
-            //         openPage();
-            //         clearInterval(waitForSuccess);
-            //     }
-            // }, 200);
-
-            console.log('-- PaidSearch.onSubmit -->');
-
-            const paySelectedPost = () => {
-                // reward author
-                this.props.dispatchSubmit({
-                    asset: LIQUID_TOKEN_UPPERCASE,
-                    author,
-                    permlink,
-                    currentUser: this.props.currentUser,
-                    receiver: author,
-                    onSuccess: onRewardSuccess,
-                    errorCallback: this.errorCallback,
-                });
-            };
-
-            paySelectedPost();
+            this.props.showRewardPost(author, permlink, openPage);
         }
     }
 
-    errorCallback(estr) {
-        this.setState({ trxError: estr, loading: false });
+    renderMarkdown(md) {
+        // remove image tag
+        // md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
+        // let h = marked(md);
+        // h = $('<p>')
+        //     .html(h)
+        //     .find('img')
+        //     .remove()
+        //     .end()
+        //     .html();
+        // return <div dangerouslySetInnerHTML={{__html: h }} />
+
+        return (
+            <MarkdownViewer
+                formId={'search-preview' + '-viewer'}
+                text={md}
+                jsonMetadata={{}}
+                large={false}
+                highQualityPost={false}
+                noImage={true}
+                hideImages={true}
+            />
+        );
     }
 
-    addPreviews() {
-        const page = this;
-        const search_res_titles = 'div.gs-webResult.gs-result a[data-cturl]';
-
-        // steem.api.setOptions({ url: 'https://steemd.minnowsupportproject.org' });
-
-        function render_preview(element) {
-            // render the preview with steem.js
-            const res = page.parsePost(element, 'gs-url');
-            if (res) {
-                const { author, permlink } = res;
-                api.getContent(author, permlink, function(err, result) {
-                    if (result && result.body) {
-                        append_preview_element(element, result.body);
-                    }
-                });
-            }
-        }
-
-        function clean_markdown(md) {
-            // remove image tag
-            // md = md.replace(/(?:!\[(.*?)\]\((.*?)\))/g, '');
-            let h = marked(md);
-            h = $('<p>')
-                .html(h)
-                .find('img')
-                .remove()
-                .end()
-                .html();
-            return h;
-        }
-
-        function get_preview_element(e) {
-            var res = $(e)
-                .parent()
-                .parent()
-                .parent();
-            return res.children('div.preview');
-        }
-
-        function add_event_listeners(e) {
-            var events = $._data(e, 'events');
-            if (!events || !events.mouseover || events.mouseover.length == 0) {
-                const res = page.parsePost(e, 'href');
-                if (res) {
-                    // update attribute
-                    $(e)
-                        .attr('gs-url', $(e).attr('href'))
-                        .removeAttr('href');
-
-                    $(e)
-                        .on('mouseover', function() {
-                            render_preview(this);
-                            get_preview_element(e).show();
-                        })
-                        .on('mouseout', function() {
-                            get_preview_element(e).hide();
-                        })
-                        .on('click', function(event) {
-                            // event.preventDefault();
-                            let href = $(e).attr('href');
-                            if (
-                                typeof href === typeof undefined ||
-                                href === false
-                            ) {
-                                page.onSubmit(e);
-                            }
-                            // else {
-                            //     let win = window.open();
-                            //     win.location = href;
-                            //     win.opener = null;
-                            //     win.blur();
-                            //     window.focus();
-                            //     // window.open(href, '_blank');
-                            // }
-                        })
-                        .on('mousedown', function(event) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                        });
+    onRenderPreview(target, content) {
+        // render the preview with steem API
+        const res = this.parsePost(target, 'gs-url');
+        if (res) {
+            const { author, permlink, key } = res;
+            api.getContent(author, permlink, (err, result) => {
+                if (result && result.body) {
+                    let state = {};
+                    state[`loading_${key}`] = false;
+                    state[`preview_${key}`] = this.renderMarkdown(result.body);
+                    this.setState(state);
                 }
-            }
-        }
+            });
 
-        function append_preview_element(e, md) {
-            var res = $(e)
-                .parent()
-                .parent()
-                .parent();
-            if (res.children('div.preview').length == 0) {
-                res.append(
-                    '<div class="preview">' + clean_markdown(md) + '</div>'
-                );
-
-                // res.append('<div class="box" />');
-                // ReactDOM.render(
-                //     <MarkdownViewer
-                //         formId={"search-preview" + '-viewer'}
-                //         text={md}
-                //         jsonMetadata={{}}
-                //         large
-                //         highQualityPost={false}
-                //         noImage={true}
-                //         hideImages={true}
-                //     />,
-                //     res.children('div.box')[0]
-                // );
-            }
-        }
-
-        function attach_preview_listeners() {
-            // 1. find the search results elements
-            var elements = $(search_res_titles);
-
-            // 2. add the preview and pay function
-            if (elements && elements.length > 0) {
-                for (var i = 0; i < elements.length; i++) {
-                    var e = elements[i];
-                    add_event_listeners(e);
-                }
-            }
-        }
-
-        function add_dom_render_observer(selector, func) {
-            var i = setInterval(function() {
-                if ($(selector).length != 0) {
-                    func();
-                    // clearInterval(i);
-                }
-            }, 100);
-        }
-
-        function add_previews() {
-            add_dom_render_observer(
-                search_res_titles,
-                attach_preview_listeners
+            return (
+                <div className="preview">
+                    {this.state[`loading_${key}`] && (
+                        <span>
+                            <LoadingIndicator type="circle" />
+                            <br />
+                        </span>
+                    )}
+                    {this.state[`preview_${key}`]}
+                </div>
             );
         }
 
-        // $(document).ready(function(){
-        add_previews();
-        // });
+        return null;
+    }
+
+    watchSearchResults() {
+        const search_res_titles = 'div.gs-webResult.gs-result a[data-cturl]';
+
+        const modify_search_result_listeners = elements => {
+            if (elements && elements.length > 0) {
+                for (var i = 0; i < elements.length; i++) {
+                    var e = elements[i];
+                    this.modifySearchResult(e);
+                }
+            }
+        };
+
+        const add_dom_render_observer = (selector, func) => {
+            var i = setInterval(function() {
+                var elements = document.querySelectorAll(selector);
+                if (elements.length != 0) {
+                    func(elements);
+                    // clearInterval(i);
+                }
+            }, 100);
+        };
+
+        add_dom_render_observer(
+            search_res_titles,
+            modify_search_result_listeners
+        );
+    }
+
+    modifySearchResult(e) {
+        const page = this;
+        if (!e.hasAttribute('gs-url-disabled')) {
+            const res = this.parsePost(e, 'href');
+            if (res) {
+                // add the mark that the element is processed
+                e.setAttribute('gs-url-disabled', '');
+                // update gs-url attribute
+                e.setAttribute('gs-url', e.getAttribute('href'));
+                e.removeAttribute('href');
+                // remove the default google custom search url
+                e.removeAttribute('data-cturl');
+                // remove default click
+                e.addEventListener('mousedown', event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+
+                // add preview and click for title only
+                if (e.parentNode.getAttribute('class') === 'gs-title') {
+                    // show hint after adding data-search argument
+                    e.setAttribute('data-search', '');
+                    e.addEventListener('click', event => {
+                        let href = e.getAttribute('href');
+                        if (
+                            typeof href === typeof undefined ||
+                            href === null ||
+                            href === false
+                        ) {
+                            this.showRewardPost(e);
+                        }
+                    });
+
+                    // set initial loading state
+                    const { key } = res;
+                    let state = {};
+                    state[`loading_${key}`] = true;
+                    this.setState(state);
+                }
+            }
+        }
     }
 
     componentDidMount() {
         this.insertCSE();
         this.renderCSE();
-        this.loadScripts(this.addPreviews);
-        // this.addPreviews();
+        // this.loadScripts(this.watchSearchResults);
+        this.watchSearchResults();
     }
 }
 
 const Search = connect(
     (state, ownProps) => {
-        const currentUser = state.user.get('current'); // state.user.getIn(['current']);
+        const currentUser = state.user.get('current');
         return { ...ownProps, currentUser };
     },
 
     // mapDispatchToProps
     dispatch => ({
-        dispatchSubmit: ({
-            asset,
-            author,
-            permlink,
-            currentUser,
-            receiver,
-            onSuccess,
-            errorCallback,
-        }) => {
-            if (!currentUser) {
-                return;
-            }
-
-            const username = currentUser.get('username');
-
-            const successCallback = () => {
-                dispatch(
-                    globalActions.getState({ url: `@${username}/transfers` })
-                ); // refresh transfer history
-                onSuccess();
-            };
-
-            const buildTransferOperation = (receiver, amount) => {
-                return {
-                    contractName: 'tokens',
-                    contractAction: 'transfer',
-                    contractPayload: {
-                        symbol: LIQUID_TOKEN_UPPERCASE,
-                        to: receiver,
-                        quantity: amount.toString(),
-                        memo: `search and click: @${author}/${permlink}`,
-                    },
-                };
-            };
-
-            const transferOperations = [
-                buildTransferOperation(
-                    receiver,
-                    SEARCH_SELECTION_REWARD_AMOUNT
-                ),
-                buildTransferOperation('null', SEARCH_SELECTION_BURN_AMOUNT),
-            ];
-
-            const operation = {
-                id: 'ssc-mainnet1',
-                required_auths: [username],
-                json: JSON.stringify(transferOperations),
-                __config: {
-                    successMessage:
-                        tt('search_jsx.successfully_rewarded_the_author') + '.',
-                },
-            };
-
+        showRewardPost: (author, permlink, onSuccess) => {
             dispatch(
-                transactionActions.broadcastOperation({
-                    type: 'custom_json',
-                    operation,
-                    successCallback,
-                    errorCallback,
+                globalActions.showDialog({
+                    name: 'rewardPost',
+                    params: { author, permlink, onSuccess },
                 })
             );
         },
